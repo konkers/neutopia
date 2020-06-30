@@ -23,8 +23,26 @@ fn main() -> Result<(), Error> {
 
     let n = Neutopia::new(&buffer)?;
 
-    for (i, addr) in n.area_pointers.iter().enumerate() {
-        println!("{}: 0x{:06x}", i, addr);
+    println!("Area data:");
+    for (i, (area_addr, room_order_addr)) in n
+        .area_pointers
+        .iter()
+        .zip(n.room_order_pointers.iter())
+        .enumerate()
+    {
+        println!("{:02x}: {:05x} {:05x}", i, area_addr, room_order_addr);
+    }
+
+    println!("\nRoom order tables:");
+    for (ptr, table) in &n.room_order_tables {
+        print!("{:05x}:", ptr);
+        for (i, room_id) in table.iter().enumerate() {
+            if i > 0 && i % 0x10 == 0x00 {
+                print!("\n      ");
+            }
+            print!(" {:02x}", room_id);
+        }
+        print!("\n");
     }
 
     Ok(())

@@ -12,6 +12,9 @@ use neutopia::Neutopia;
 struct Opt {
     #[structopt(long, parse(from_os_str), default_value = "neutopia-jp.pce")]
     rom: PathBuf,
+
+    #[structopt(long, parse(from_os_str), default_value = "out")]
+    outdir: PathBuf,
 }
 
 fn write_byte_array(f: &mut File, data: &Vec<u8>) -> Result<(), Error> {
@@ -26,10 +29,9 @@ fn write_byte_array(f: &mut File, data: &Vec<u8>) -> Result<(), Error> {
     Ok(())
 }
 
-fn write_area_markdown(n: &Neutopia, area_index: usize) -> Result<(), Error> {
-    let path: PathBuf = ["out", &format!("area_{:02x}.md", area_index)]
-        .iter()
-        .collect();
+fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(), Error> {
+    let mut path: PathBuf = opt.outdir.clone();
+    path.push(format!("area_{:02x}.md", area_index));
     let mut f = File::create(path)?;
 
     writeln!(f, "# Area {:01X}\n", area_index)?;
@@ -103,7 +105,7 @@ fn write_area_markdown(n: &Neutopia, area_index: usize) -> Result<(), Error> {
 
 fn main() -> Result<(), Error> {
     let opt = Opt::from_args();
-    let mut f = File::open(opt.rom)?;
+    let mut f = File::open(&opt.rom)?;
     let mut buffer = Vec::new();
     // read the whole file
     f.read_to_end(&mut buffer)?;
@@ -111,7 +113,7 @@ fn main() -> Result<(), Error> {
     let n = Neutopia::new(&buffer)?;
 
     for area_index in 0..n.area_pointers.len() {
-        write_area_markdown(&n, area_index)?;
+        write_area_markdown(&opt, &n, area_index)?;
     }
     Ok(())
 }

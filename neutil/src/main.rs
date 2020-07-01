@@ -112,28 +112,6 @@ fn main() -> Result<(), Error> {
 
     let n = Neutopia::new(&buffer)?;
 
-    println!("Area data:");
-    for (i, (area_addr, room_order_addr)) in n
-        .area_pointers
-        .iter()
-        .zip(n.room_order_pointers.iter())
-        .enumerate()
-    {
-        println!("{:02x}: {} {}", i, area_addr, room_order_addr);
-    }
-
-    println!("\nRoom order tables:");
-    for (ptr, table) in &n.room_order_tables {
-        print!("{:05x}:", ptr);
-        for (i, room_id) in table.iter().enumerate() {
-            if i > 0 && i % 0x10 == 0x00 {
-                print!("\n      ");
-            }
-            print!(" {:02x}", room_id);
-        }
-        print!("\n");
-    }
-
     for area_index in 0..n.area_pointers.len() {
         write_area_markdown(&n, area_index)?;
     }

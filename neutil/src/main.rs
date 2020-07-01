@@ -52,17 +52,15 @@ fn write_area_markdown(n: &Neutopia, area_index: usize) -> Result<(), Error> {
     let addr = n.room_order_pointers[area_index];
     let table = &n.room_order_tables[&addr];
     writeln!(f, "## Room Map/Order\n")?;
-    writeln!(f, "```")?;
-    writeln!(f, "     0  1  2  3  4  5  6  7")?;
-    write!(f, "  +------------------------")?;
+    writeln!(f, "|   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |")?;
+    write!(f, "  |---|---|---|---|---|---|---|---|---|")?;
     for (i, room_id) in table.iter().enumerate() {
         if i % 8 == 0x00 {
-            write!(f, "\n{} |", &i / 8)?;
+            write!(f, "\n| {} |", &i / 8)?;
         }
 
-        write!(f, " {:02x}", room_id)?;
+        write!(f, " [{:02x}](#room-{:02x}) |", room_id, i)?;
     }
-    writeln!(f, "\n```")?;
 
     writeln!(f, "## Rooms\n")?;
     let rooms = &n.room_info_tables[area_index];
@@ -73,7 +71,7 @@ fn write_area_markdown(n: &Neutopia, area_index: usize) -> Result<(), Error> {
         let room = &rooms[&room_id];
         writeln!(
             f,
-            "### Room {:02X} ({}, {}) @ {:05x}\n",
+            "### Room {:02X}\n\n ***({}, {}) @ {:05x}***\n",
             room_id,
             room_id / 8,
             room_id % 8,

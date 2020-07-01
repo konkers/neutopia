@@ -1,11 +1,9 @@
 use failure::{format_err, Error};
 
 pub fn pointer_to_rom_offset(data: &[u8]) -> Result<u32, Error> {
-    println!("{:02x} {:02x} {:02x}", data[0], data[1], data[2]);
     assert!(data.len() >= 3);
 
     let value = ((data[0] as u32) << 13) | ((data[2] as u32 & 0x1f) << 8) | (data[1] as u32);
-
     if value < 0x40000 {
         Err(format_err!(
             "can't convert: {:02x} {:02x} {:02x}",

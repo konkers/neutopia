@@ -50,11 +50,6 @@ impl Neutopia {
             for idx in 0..0x40 {
                 let offset = (*area_ptr as usize) + (idx as usize) * 3;
                 let offset = util::pointer_to_rom_offset(&data[offset..])? as usize;
-
-                println!(
-                    "{:05x} {:05x} {:02x} {:05x}",
-                    area_ptr, room_order_ptr, idx, offset
-                );
                 let ptrs = util::decode_pointer_table(&data[offset..], 3)?;
                 let warp_table_pointer = ptrs[0];
                 let enemy_table_pointer = ptrs[1];

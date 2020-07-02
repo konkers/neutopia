@@ -45,6 +45,7 @@ pub enum TableEntry {
     FireballSpawner(ObjectInfo),
     ShopItem([u8; 7]),
     UnknownE1([u8; 9]),
+    UnknownF4([u8; 5]),
 }
 
 impl fmt::Display for TableEntry {
@@ -72,6 +73,7 @@ impl fmt::Display for TableEntry {
             Self::FireballSpawner(info) => write!(f, "fireball spawner {}", info),
             Self::ShopItem(data) => write!(f, "shop item {:x?}", data),
             Self::UnknownE1(data) => write!(f, "unknown object 0xe1 {:x?}", data),
+            Self::UnknownF4(data) => write!(f, "unknown object 0xf4 {:x?}", data),
         }
     }
 }
@@ -243,6 +245,15 @@ fn parse_unknown_e1(i: &[u8]) -> IResult<&[u8], TableEntry> {
     ))
 }
 
+fn parse_unknown_f4(i: &[u8]) -> IResult<&[u8], TableEntry> {
+    let (i, _) = tag([0xf4])(i)?;
+    let (i, data) = take(5usize)(i)?;
+    Ok((
+        i,
+        TableEntry::UnknownF4([data[0], data[1], data[2], data[3], data[4]]),
+    ))
+}
+
 fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
     // There seems to be a limit on the size of tuples in for alt so we
     // split it.
@@ -272,6 +283,7 @@ fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
             parse_fireball_spawner,
             parse_shop_item,
             parse_unknown_e1,
+            parse_unknown_f4,
         )),
     ))(i)
 }
@@ -286,6 +298,7 @@ pub fn object_table_len(data: &[u8]) -> Result<usize, Error> {
 
     Ok(data.len() - i.len())
 }
+
 pub fn parse_object_table(data: &[u8]) -> Result<Vec<TableEntry>, Error> {
     let (i, table) =
         many0(parse_object_table_entry)(data).map_err(|e| format_err!("parse error: {}", e))?;
@@ -484,6 +497,14 @@ mod tests {
             Ok((
                 &[][..],
                 TableEntry::UnknownE1([0x48, 0x02, 0x00, 0x7d, 0x41, 0x56, 0x2e, 0x81, 0x01])
+            ))
+        );
+
+        assert_eq!(
+            parse_object_table_entry(&[0xf4, 0xa7, 0x02, 0x03, 0x40, 0x43]),
+            Ok((
+                &[][..],
+                TableEntry::UnknownF4([0xa7, 0x02, 0x03, 0x40, 0x43]),
             ))
         );
 

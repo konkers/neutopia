@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use failure::Error;
 use structopt::StructOpt;
 
-use neutopia::Neutopia;
+use neutopia::{object::parse_object_table, Neutopia};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
@@ -98,6 +98,18 @@ fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(),
 
         writeln!(f, "#### Object Table\n")?;
         write_byte_array(&mut f, &room.object_table)?;
+        match parse_object_table(&room.object_table) {
+            Ok(table) => {
+                for entry in &table {
+                    writeln!(f, "- {}", entry)?;
+                }
+                writeln!(f, "")?;
+            }
+            Err(e) => println!(
+                "Can't parse object table area {:02x} room {:02x}: {}",
+                area_index, room_id, e
+            ),
+        }
     }
 
     Ok(())

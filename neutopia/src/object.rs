@@ -33,6 +33,7 @@ pub enum TableEntry {
     DarkRoom,
     BossDoor(u8),
     Unknown0b([u8; 3]),
+    Burnable(ObjectInfo),
     Swords(ObjectInfo),
     GhostSpawner(ObjectInfo),
     FireballSpawner(ObjectInfo),
@@ -52,6 +53,7 @@ impl fmt::Display for TableEntry {
             Self::DarkRoom => write!(f, "dark room"),
             Self::BossDoor(data) => write!(f, "boss door 0x{:02x}", data),
             Self::Unknown0b(data) => write!(f, "unknown object 0x0b {:x?}", data),
+            Self::Burnable(info) => write!(f, "burnable {}", info),
             Self::Swords(info) => write!(f, "swords {}", info),
             Self::GhostSpawner(info) => write!(f, "ghost spawner {}", info),
             Self::FireballSpawner(info) => write!(f, "fireball spawner {}", info),
@@ -123,17 +125,24 @@ fn parse_dark_room(i: &[u8]) -> IResult<&[u8], TableEntry> {
     Ok((i, TableEntry::DarkRoom))
 }
 
+fn parse_boss_door(i: &[u8]) -> IResult<&[u8], TableEntry> {
+    let (i, _) = tag([0x0a])(i)?;
+    let (i, data) = take(1usize)(i)?;
+
+    Ok((i, TableEntry::BossDoor(data[0])))
+}
+
 fn parse_unknown_0b(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0x0b])(i)?;
     let (i, data) = take(3usize)(i)?;
     Ok((i, TableEntry::Unknown0b([data[0], data[1], data[2]])))
 }
 
-fn parse_boss_door(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x0a])(i)?;
-    let (i, data) = take(1usize)(i)?;
+fn parse_burnable(i: &[u8]) -> IResult<&[u8], TableEntry> {
+    let (i, _) = tag([0x0c])(i)?;
+    let (i, info) = parse_object_info(i)?;
 
-    Ok((i, TableEntry::BossDoor(data[0])))
+    Ok((i, TableEntry::Burnable(info)))
 }
 
 fn parse_swords(i: &[u8]) -> IResult<&[u8], TableEntry> {
@@ -179,6 +188,7 @@ fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
         parse_enemy_gated_object,
         parse_dark_room,
         parse_unknown_0b,
+        parse_burnable,
         parse_boss_door,
         parse_swords,
         parse_ghost_spawner,
@@ -272,6 +282,18 @@ mod tests {
         assert_eq!(
             parse_object_table_entry(&[0x0b, 0x46, 0x2a, 0x04]),
             Ok((&[][..], TableEntry::Unknown0b([0x46, 0x2a, 0x04])))
+        );
+
+        assert_eq!(
+            parse_object_table_entry(&[0x0c, 0x52, 0xa5]),
+            Ok((
+                &[][..],
+                TableEntry::Burnable(ObjectInfo {
+                    x: 2,
+                    y: 5,
+                    id: 0xa5
+                })
+            ))
         );
 
         assert_eq!(

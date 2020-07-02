@@ -38,14 +38,8 @@ impl Neutopia {
 
         let mut room_info_tables = Vec::new();
         let mut room_order_tables = HashMap::new();
-        for (_, (area_ptr, room_order_ptr)) in area_pointers
-            .iter()
-            .zip(room_order_pointers.iter())
-            .enumerate()
-        {
-            let offset = *room_order_ptr as usize;
-            let table = Vec::from(&data[offset..offset + 0x40]);
 
+        for area_ptr in &area_pointers {
             let mut area_info = HashMap::new();
             for idx in 0..0x40 {
                 let offset = (*area_ptr as usize) + (idx as usize) * 3;
@@ -72,9 +66,14 @@ impl Neutopia {
                     },
                 );
             }
+            room_info_tables.push(area_info);
+        }
+
+        for room_order_ptr in &room_order_pointers {
+            let offset = *room_order_ptr as usize;
+            let table = Vec::from(&data[offset..offset + 0x40]);
 
             room_order_tables.insert(*room_order_ptr, table);
-            room_info_tables.push(area_info);
         }
 
         Ok(Neutopia {

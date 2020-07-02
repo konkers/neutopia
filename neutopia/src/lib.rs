@@ -2,9 +2,12 @@ use std::collections::HashMap;
 
 use failure::Error;
 
+mod chest;
 pub mod object;
 mod rommap;
 mod util;
+
+pub use chest::Chest;
 
 #[derive(Debug)]
 pub struct Room {
@@ -22,9 +25,11 @@ pub struct Room {
 pub struct Neutopia {
     pub area_pointers: Vec<u32>,
     pub room_order_pointers: Vec<u32>,
-    pub room_order_tables: HashMap<u32, Vec<u8>>,
+    pub chest_table_pointers: Vec<u32>,
 
+    pub room_order_tables: HashMap<u32, Vec<u8>>,
     pub room_info_tables: Vec<HashMap<u8, Room>>,
+    pub chest_tables: HashMap<u32, Vec<Chest>>,
 }
 
 impl Neutopia {
@@ -35,9 +40,12 @@ impl Neutopia {
             &data[rommap::ROOM_ORDER_TABLE..],
             rommap::ROOM_ORDER_TABLE_COUNT,
         )?;
+        let chest_table_pointers =
+            util::decode_pointer_table(&data[rommap::CHEST_TABLE..], rommap::CHEST_TABLE_COUNT)?;
 
         let mut room_info_tables = Vec::new();
         let mut room_order_tables = HashMap::new();
+        let mut chest_tables = HashMap::new();
 
         for area_ptr in &area_pointers {
             let mut area_info = HashMap::new();
@@ -86,8 +94,10 @@ impl Neutopia {
         Ok(Neutopia {
             area_pointers,
             room_order_pointers,
+            chest_table_pointers,
             room_order_tables,
             room_info_tables,
+            chest_tables,
         })
     }
 }

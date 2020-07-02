@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fmt;
 
 use failure::Error;
 
@@ -39,7 +38,7 @@ impl Neutopia {
 
         let mut room_info_tables = Vec::new();
         let mut room_order_tables = HashMap::new();
-        for (i, (area_ptr, room_order_ptr)) in area_pointers
+        for (_, (area_ptr, room_order_ptr)) in area_pointers
             .iter()
             .zip(room_order_pointers.iter())
             .enumerate()

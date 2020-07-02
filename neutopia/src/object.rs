@@ -35,7 +35,7 @@ pub enum TableEntry {
     BossDoor(u8),
     Unknown0b([u8; 3]),
     Burnable(ObjectInfo),
-    Unknown0d([u8; 2]),
+    HiddenRoom([u8; 2]),
     FalconBootsNeeded,
     Npc([u8; 5]),
     OuchRope(ObjectInfo),
@@ -63,7 +63,7 @@ impl fmt::Display for TableEntry {
             Self::BossDoor(data) => write!(f, "boss door 0x{:02x}", data),
             Self::Unknown0b(data) => write!(f, "unknown object 0x0b {:x?}", data),
             Self::Burnable(info) => write!(f, "burnable {}", info),
-            Self::Unknown0d(data) => write!(f, "unknown object 0x0d {:x?}", data),
+            Self::HiddenRoom(data) => write!(f, "hidden room {:x?}", data),
             Self::FalconBootsNeeded => write!(f, "falcon boots needed"),
             Self::Npc(data) => write!(f, "npc {:x?}", data),
             Self::OuchRope(info) => write!(f, "ouch rope segment {}", info),
@@ -168,10 +168,10 @@ fn parse_burnable(i: &[u8]) -> IResult<&[u8], TableEntry> {
     Ok((i, TableEntry::Burnable(info)))
 }
 
-fn parse_unknown_0d(i: &[u8]) -> IResult<&[u8], TableEntry> {
+fn parse_hidden_room(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0x0d])(i)?;
     let (i, data) = take(2usize)(i)?;
-    Ok((i, TableEntry::Unknown0d([data[0], data[1]])))
+    Ok((i, TableEntry::HiddenRoom([data[0], data[1]])))
 }
 
 fn parse_falcon_boots_needed(i: &[u8]) -> IResult<&[u8], TableEntry> {
@@ -270,7 +270,7 @@ fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
             parse_dark_room,
             parse_unknown_0b,
             parse_burnable,
-            parse_unknown_0d,
+            parse_hidden_room,
             parse_falcon_boots_needed,
             parse_npc,
             parse_boss_door,
@@ -412,7 +412,7 @@ mod tests {
 
         assert_eq!(
             parse_object_table_entry(&[0x0d, 0x14, 0x14]),
-            Ok((&[][..], TableEntry::Unknown0d([0x14, 0x44])))
+            Ok((&[][..], TableEntry::HiddenRoom([0x14, 0x14])))
         );
 
         assert_eq!(

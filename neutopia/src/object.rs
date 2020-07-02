@@ -1,3 +1,5 @@
+use std::fmt;
+
 use failure::{format_err, Error};
 use nom::{
     branch::alt,
@@ -11,6 +13,12 @@ pub struct ObjectInfo {
     x: u8,
     y: u8,
     id: u8,
+}
+
+impl fmt::Display for ObjectInfo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "0x{:02x} @ ({},{})", self.id, self.x, self.y)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -29,6 +37,27 @@ pub enum TableEntry {
     GhostSpawner(ObjectInfo),
     FireballSpawner(ObjectInfo),
     UnknownE1([u8; 9]),
+}
+
+impl fmt::Display for TableEntry {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Object(info) => write!(f, "object {}", info),
+            Self::OpenDoor(data) => write!(f, "open door 0x{:02x}", data),
+            Self::PushBlockGatedDoor(data) => write!(f, "push block gated door 0x{:02x}", data),
+            Self::EnemyGatedDoor(data) => write!(f, "enemy gated door 0x{:02x}", data),
+            Self::BombableDoor(data) => write!(f, "bombable door 0x{:02x}", data),
+            Self::PushBlockGatedObject(info) => write!(f, "push block gated object {}", info),
+            Self::EnemyGatedObject(info) => write!(f, "enemy gated object {}", info),
+            Self::DarkRoom => write!(f, "dark room"),
+            Self::BossDoor(data) => write!(f, "boss door 0x{:02x}", data),
+            Self::Unknown0b(data) => write!(f, "unknown object 0x0b {:x?}", data),
+            Self::Swords(info) => write!(f, "swords {}", info),
+            Self::GhostSpawner(info) => write!(f, "ghost spawner {}", info),
+            Self::FireballSpawner(info) => write!(f, "fireball spawner {}", info),
+            Self::UnknownE1(data) => write!(f, "unknown object 0xe1 {:x?}", data),
+        }
+    }
 }
 
 fn parse_object_info(i: &[u8]) -> IResult<&[u8], ObjectInfo> {

@@ -34,6 +34,7 @@ pub enum TableEntry {
     BossDoor(u8),
     Unknown0b([u8; 3]),
     Burnable(ObjectInfo),
+    FalconBootsNeeded,
     Swords(ObjectInfo),
     GhostSpawner(ObjectInfo),
     FireballSpawner(ObjectInfo),
@@ -54,6 +55,7 @@ impl fmt::Display for TableEntry {
             Self::BossDoor(data) => write!(f, "boss door 0x{:02x}", data),
             Self::Unknown0b(data) => write!(f, "unknown object 0x0b {:x?}", data),
             Self::Burnable(info) => write!(f, "burnable {}", info),
+            Self::FalconBootsNeeded => write!(f, "falcon boots needed"),
             Self::Swords(info) => write!(f, "swords {}", info),
             Self::GhostSpawner(info) => write!(f, "ghost spawner {}", info),
             Self::FireballSpawner(info) => write!(f, "fireball spawner {}", info),
@@ -145,6 +147,11 @@ fn parse_burnable(i: &[u8]) -> IResult<&[u8], TableEntry> {
     Ok((i, TableEntry::Burnable(info)))
 }
 
+fn parse_falcon_boots_needed(i: &[u8]) -> IResult<&[u8], TableEntry> {
+    let (i, _) = tag([0x81])(i)?;
+    Ok((i, TableEntry::FalconBootsNeeded))
+}
+
 fn parse_swords(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0xc0])(i)?;
     let (i, info) = parse_object_info(i)?;
@@ -189,6 +196,7 @@ fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
         parse_dark_room,
         parse_unknown_0b,
         parse_burnable,
+        parse_falcon_boots_needed,
         parse_boss_door,
         parse_swords,
         parse_ghost_spawner,
@@ -294,6 +302,11 @@ mod tests {
                     id: 0xa5
                 })
             ))
+        );
+
+        assert_eq!(
+            parse_object_table_entry(&[0x81]),
+            Ok((&[][..], TableEntry::FalconBootsNeeded))
         );
 
         assert_eq!(

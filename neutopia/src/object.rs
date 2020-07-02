@@ -247,6 +247,16 @@ fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
     ))(i)
 }
 
+pub fn object_table_len(data: &[u8]) -> Result<usize, Error> {
+    let (i, _) =
+        many0(parse_object_table_entry)(data).map_err(|e| format_err!("parse error: {}", e))?;
+
+    if i.len() > 0 && i[0] != 0xff {
+        return Err(format_err!("unparsed input: {:x?}", i));
+    }
+
+    Ok(data.len() - i.len())
+}
 pub fn parse_object_table(data: &[u8]) -> Result<Vec<TableEntry>, Error> {
     let (i, table) =
         many0(parse_object_table_entry)(data).map_err(|e| format_err!("parse error: {}", e))?;

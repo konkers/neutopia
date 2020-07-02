@@ -47,7 +47,16 @@ impl Neutopia {
                 let ptrs = util::decode_pointer_table(&data[offset..], 3)?;
                 let warp_table_pointer = ptrs[0];
                 let enemy_table_pointer = ptrs[1];
-                let object_table_pointer = ptrs[2];
+                let object_table_pointer = ptrs[2] as usize;
+
+                // Todo, clean this up once everything parses.
+                let object_table = match object::object_table_len(&data[object_table_pointer..]) {
+                    Ok(len) => data[object_table_pointer..object_table_pointer + len]
+                        .iter()
+                        .cloned()
+                        .collect(),
+                    Err(_) => util::read_object_table(&data[object_table_pointer as usize..]),
+                };
 
                 area_info.insert(
                     idx as u8,
@@ -55,14 +64,12 @@ impl Neutopia {
                         base_addr: offset as u32,
                         warp_table_pointer,
                         enemy_table_pointer,
-                        object_table_pointer,
+                        object_table_pointer: object_table_pointer as u32,
                         warp_table: Vec::from(
                             &data[(warp_table_pointer as usize)..(enemy_table_pointer as usize)],
                         ),
                         enemy_table: util::read_object_table(&data[enemy_table_pointer as usize..]),
-                        object_table: util::read_object_table(
-                            &data[object_table_pointer as usize..],
-                        ),
+                        object_table: object_table,
                     },
                 );
             }

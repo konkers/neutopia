@@ -36,6 +36,7 @@ pub enum TableEntry {
     Unknown0b([u8; 3]),
     Burnable(ObjectInfo),
     FalconBootsNeeded,
+    ArrowLauncher(ObjectInfo),
     Swords(ObjectInfo),
     GhostSpawner(ObjectInfo),
     FireballSpawner(ObjectInfo),
@@ -58,6 +59,7 @@ impl fmt::Display for TableEntry {
             Self::Unknown0b(data) => write!(f, "unknown object 0x0b {:x?}", data),
             Self::Burnable(info) => write!(f, "burnable {}", info),
             Self::FalconBootsNeeded => write!(f, "falcon boots needed"),
+            Self::ArrowLauncher(info) => write!(f, "arrow launcher {}", info),
             Self::Swords(info) => write!(f, "swords {}", info),
             Self::GhostSpawner(info) => write!(f, "ghost spawner {}", info),
             Self::FireballSpawner(info) => write!(f, "fireball spawner {}", info),
@@ -161,6 +163,13 @@ fn parse_falcon_boots_needed(i: &[u8]) -> IResult<&[u8], TableEntry> {
     Ok((i, TableEntry::FalconBootsNeeded))
 }
 
+fn parse_arrow_launcher(i: &[u8]) -> IResult<&[u8], TableEntry> {
+    let (i, _) = tag([0xbf])(i)?;
+    let (i, info) = parse_object_info(i)?;
+
+    Ok((i, TableEntry::ArrowLauncher(info)))
+}
+
 fn parse_swords(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0xc0])(i)?;
     let (i, info) = parse_object_info(i)?;
@@ -208,6 +217,7 @@ fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
         parse_burnable,
         parse_falcon_boots_needed,
         parse_boss_door,
+        parse_arrow_launcher,
         parse_swords,
         parse_ghost_spawner,
         parse_fireball_spawner,
@@ -329,6 +339,18 @@ mod tests {
         assert_eq!(
             parse_object_table_entry(&[0x81]),
             Ok((&[][..], TableEntry::FalconBootsNeeded))
+        );
+
+        assert_eq!(
+            parse_object_table_entry(&[0xbf, 0x25, 0x5a]),
+            Ok((
+                &[][..],
+                TableEntry::ArrowLauncher(ObjectInfo {
+                    x: 5,
+                    y: 2,
+                    id: 0x5a
+                })
+            ))
         );
 
         assert_eq!(

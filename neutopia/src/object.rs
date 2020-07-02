@@ -43,6 +43,7 @@ pub enum TableEntry {
     Swords(ObjectInfo),
     GhostSpawner(ObjectInfo),
     FireballSpawner(ObjectInfo),
+    ShopItem([u8; 7]),
     UnknownE1([u8; 9]),
 }
 
@@ -69,6 +70,7 @@ impl fmt::Display for TableEntry {
             Self::Swords(info) => write!(f, "swords {}", info),
             Self::GhostSpawner(info) => write!(f, "ghost spawner {}", info),
             Self::FireballSpawner(info) => write!(f, "fireball spawner {}", info),
+            Self::ShopItem(data) => write!(f, "shop item {:x?}", data),
             Self::UnknownE1(data) => write!(f, "unknown object 0xe1 {:x?}", data),
         }
     }
@@ -219,6 +221,17 @@ fn parse_fireball_spawner(i: &[u8]) -> IResult<&[u8], TableEntry> {
     Ok((i, TableEntry::FireballSpawner(info)))
 }
 
+fn parse_shop_item(i: &[u8]) -> IResult<&[u8], TableEntry> {
+    let (i, _) = tag([0xda])(i)?;
+    let (i, data) = take(7usize)(i)?;
+    Ok((
+        i,
+        TableEntry::ShopItem([
+            data[0], data[1], data[2], data[3], data[4], data[5], data[6],
+        ]),
+    ))
+}
+
 fn parse_unknown_e1(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0xe1])(i)?;
     let (i, data) = take(9usize)(i)?;
@@ -231,28 +244,35 @@ fn parse_unknown_e1(i: &[u8]) -> IResult<&[u8], TableEntry> {
 }
 
 fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
+    // There seems to be a limit on the size of tuples in for alt so we
+    // split it.
     alt((
-        parse_object,
-        parse_open_door,
-        parse_push_block_gated_door,
-        parse_enemy_gated_door,
-        parse_bombable_door,
-        parse_push_block_gated_object,
-        parse_enemy_gated_object,
-        parse_bell_gated_object,
-        parse_dark_room,
-        parse_unknown_0b,
-        parse_burnable,
-        parse_unknown_0d,
-        parse_falcon_boots_needed,
-        parse_npc,
-        parse_boss_door,
-        parse_ouch_rope,
-        parse_arrow_launcher,
-        parse_swords,
-        parse_ghost_spawner,
-        parse_fireball_spawner,
-        parse_unknown_e1,
+        alt((
+            parse_object,
+            parse_open_door,
+            parse_push_block_gated_door,
+            parse_enemy_gated_door,
+            parse_bombable_door,
+            parse_push_block_gated_object,
+            parse_enemy_gated_object,
+            parse_bell_gated_object,
+            parse_dark_room,
+            parse_unknown_0b,
+            parse_burnable,
+            parse_unknown_0d,
+            parse_falcon_boots_needed,
+            parse_npc,
+            parse_boss_door,
+        )),
+        alt((
+            parse_ouch_rope,
+            parse_arrow_launcher,
+            parse_swords,
+            parse_ghost_spawner,
+            parse_fireball_spawner,
+            parse_shop_item,
+            parse_unknown_e1,
+        )),
     ))(i)
 }
 
@@ -448,6 +468,14 @@ mod tests {
                     y: 2,
                     id: 0x5a
                 })
+            ))
+        );
+
+        assert_eq!(
+            parse_object_table_entry(&[0xda, 0x46, 0x00, 0x00, 0x02, 0x00, 0x01, 0x01]),
+            Ok((
+                &[][..],
+                TableEntry::ShopItem([0x46, 0x00, 0x00, 0x02, 0x00, 0x01, 0x01]),
             ))
         );
 

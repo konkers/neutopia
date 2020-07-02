@@ -36,6 +36,7 @@ pub enum TableEntry {
     Unknown0b([u8; 3]),
     Burnable(ObjectInfo),
     FalconBootsNeeded,
+    Npc([u8; 5]),
     OuchRope(ObjectInfo),
     ArrowLauncher(ObjectInfo),
     Swords(ObjectInfo),
@@ -60,6 +61,7 @@ impl fmt::Display for TableEntry {
             Self::Unknown0b(data) => write!(f, "unknown object 0x0b {:x?}", data),
             Self::Burnable(info) => write!(f, "burnable {}", info),
             Self::FalconBootsNeeded => write!(f, "falcon boots needed"),
+            Self::Npc(data) => write!(f, "npc {:x?}", data),
             Self::OuchRope(info) => write!(f, "ouch rope segment {}", info),
             Self::ArrowLauncher(info) => write!(f, "arrow launcher {}", info),
             Self::Swords(info) => write!(f, "swords {}", info),
@@ -165,6 +167,15 @@ fn parse_falcon_boots_needed(i: &[u8]) -> IResult<&[u8], TableEntry> {
     Ok((i, TableEntry::FalconBootsNeeded))
 }
 
+fn parse_npc(i: &[u8]) -> IResult<&[u8], TableEntry> {
+    let (i, _) = tag([0x9a])(i)?;
+    let (i, data) = take(5usize)(i)?;
+    Ok((
+        i,
+        TableEntry::Npc([data[0], data[1], data[2], data[3], data[4]]),
+    ))
+}
+
 fn parse_ouch_rope(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0xbd])(i)?;
     let (i, info) = parse_object_info(i)?;
@@ -225,6 +236,7 @@ fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
         parse_unknown_0b,
         parse_burnable,
         parse_falcon_boots_needed,
+        parse_npc,
         parse_boss_door,
         parse_ouch_rope,
         parse_arrow_launcher,
@@ -349,6 +361,10 @@ mod tests {
         assert_eq!(
             parse_object_table_entry(&[0x81]),
             Ok((&[][..], TableEntry::FalconBootsNeeded))
+        );
+        assert_eq!(
+            parse_object_table_entry(&[0x9a, 0x48, 0x02, 0x03, 0x00, 0x40]),
+            Ok((&[][..], TableEntry::Npc([0x48, 0x02, 0x03, 0x00, 0x40])))
         );
 
         assert_eq!(

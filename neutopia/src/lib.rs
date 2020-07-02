@@ -3,6 +3,7 @@ use std::fmt;
 
 use failure::Error;
 
+pub mod object;
 mod rommap;
 mod util;
 

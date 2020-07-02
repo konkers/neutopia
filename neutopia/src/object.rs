@@ -30,6 +30,7 @@ pub enum TableEntry {
     BombableDoor(u8),
     PushBlockGatedObject(ObjectInfo),
     EnemyGatedObject(ObjectInfo),
+    BellGatedObject(ObjectInfo),
     DarkRoom,
     BossDoor(u8),
     Unknown0b([u8; 3]),
@@ -51,6 +52,7 @@ impl fmt::Display for TableEntry {
             Self::BombableDoor(data) => write!(f, "bombable door 0x{:02x}", data),
             Self::PushBlockGatedObject(info) => write!(f, "push block gated object {}", info),
             Self::EnemyGatedObject(info) => write!(f, "enemy gated object {}", info),
+            Self::BellGatedObject(info) => write!(f, "bell gated object {}", info),
             Self::DarkRoom => write!(f, "dark room"),
             Self::BossDoor(data) => write!(f, "boss door 0x{:02x}", data),
             Self::Unknown0b(data) => write!(f, "unknown object 0x0b {:x?}", data),
@@ -120,6 +122,13 @@ fn parse_enemy_gated_object(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, info) = parse_object_info(i)?;
 
     Ok((i, TableEntry::EnemyGatedObject(info)))
+}
+
+fn parse_bell_gated_object(i: &[u8]) -> IResult<&[u8], TableEntry> {
+    let (i, _) = tag([0x08])(i)?;
+    let (i, info) = parse_object_info(i)?;
+
+    Ok((i, TableEntry::BellGatedObject(info)))
 }
 
 fn parse_dark_room(i: &[u8]) -> IResult<&[u8], TableEntry> {
@@ -193,6 +202,7 @@ fn parse_object_table_entry(i: &[u8]) -> IResult<&[u8], TableEntry> {
         parse_bombable_door,
         parse_push_block_gated_object,
         parse_enemy_gated_object,
+        parse_bell_gated_object,
         parse_dark_room,
         parse_unknown_0b,
         parse_burnable,
@@ -270,6 +280,18 @@ mod tests {
             Ok((
                 &[][..],
                 TableEntry::EnemyGatedObject(ObjectInfo {
+                    x: 5,
+                    y: 2,
+                    id: 0x5a
+                })
+            ))
+        );
+
+        assert_eq!(
+            parse_object_table_entry(&[0x08, 0x25, 0x5a]),
+            Ok((
+                &[][..],
+                TableEntry::BellGatedObject(ObjectInfo {
                     x: 5,
                     y: 2,
                     id: 0x5a

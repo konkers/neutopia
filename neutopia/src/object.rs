@@ -12,9 +12,9 @@ use nom::{
 
 #[derive(Debug, PartialEq)]
 pub struct ObjectInfo {
-    x: u8,
-    y: u8,
-    id: u8,
+    pub x: u8,
+    pub y: u8,
+    pub id: u8,
 }
 
 impl fmt::Display for ObjectInfo {

@@ -2,8 +2,11 @@ use std::fs::File;
 use std::io::{prelude::*, Cursor, SeekFrom};
 use std::path::PathBuf;
 
-use failure::Error;
+use failure::{format_err, Error};
+use radix_fmt::radix_36;
 use rand::{self, prelude::*};
+use rand_core::SeedableRng;
+use rand_pcg::Pcg32;
 use structopt::StructOpt;
 
 use neutopia::{object, object::parse_object_table, Neutopia};
@@ -13,11 +16,19 @@ struct Opt {
     #[structopt(long, parse(from_os_str), default_value = "neutopia-jp.pce")]
     rom: PathBuf,
 
-    #[structopt(long, parse(from_os_str), default_value = "neutopia-seed.pce")]
-    out: PathBuf,
+    #[structopt(long, parse(from_os_str))]
+    out: Option<PathBuf>,
+
+    #[structopt(long)]
+    seed: Option<String>,
 }
 
-fn shuffle_area(n: &Neutopia, area_index: usize, data: &mut [u8]) -> Result<(), Error> {
+fn shuffle_area(
+    rng: &mut impl Rng,
+    n: &Neutopia,
+    area_index: usize,
+    data: &mut [u8],
+) -> Result<(), Error> {
     let room_info_table = &n.room_info_tables[area_index];
     let chest_table = &n.chest_tables[&n.chest_table_pointers[area_index]];
 
@@ -43,8 +54,7 @@ fn shuffle_area(n: &Neutopia, area_index: usize, data: &mut [u8]) -> Result<(), 
     }
 
     // Next shuffle the chest contents.
-    let mut rng = rand::thread_rng();
-    chest_contents.shuffle(&mut rng);
+    chest_contents.shuffle(rng);
 
     // Patch up a new chest table.
     let mut new_chest_table = chest_table.clone();
@@ -73,6 +83,16 @@ fn shuffle_area(n: &Neutopia, area_index: usize, data: &mut [u8]) -> Result<(), 
 
 fn main() -> Result<(), Error> {
     let opt = Opt::from_args();
+
+    // Let the user specify a seed in base36.  Otherwise randomly generate one.
+    let seed = match &opt.seed {
+        Some(s) => u64::from_str_radix(s, 36)
+            .map_err(|e| format_err!("Seed name must be a valid base36 64 bit number: {}", e))?,
+        None => rand::thread_rng().gen(),
+    };
+
+    let mut rng = Pcg32::seed_from_u64(seed);
+
     let mut f = File::open(&opt.rom)?;
     let mut buffer = Vec::new();
     // read the whole file
@@ -81,10 +101,15 @@ fn main() -> Result<(), Error> {
     let n = Neutopia::new(&buffer)?;
 
     for i in 4..=0xb {
-        shuffle_area(&n, i, &mut buffer)?;
+        shuffle_area(&mut rng, &n, i, &mut buffer)?;
     }
 
-    let mut f = File::create(&opt.out)?;
+    let filename = &opt
+        .out
+        .unwrap_or(PathBuf::from(format!("NR-{:#}.pce", radix_36(seed))));
+    let mut f = File::create(filename)?;
     f.write_all(&buffer)?;
+
+    println!("wrote {}", filename.display());
     Ok(())
 }

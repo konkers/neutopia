@@ -49,6 +49,13 @@ fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(),
         "| Room order table pointer | {:05x} |",
         n.room_order_pointers[area_index]
     )?;
+    if area_index < n.chest_table_pointers.len() {
+        writeln!(
+            f,
+            "| Chest table pointer | {:05x} |",
+            n.chest_table_pointers[area_index]
+        )?;
+    }
     write!(f, "\n")?;
 
     let addr = n.room_order_pointers[area_index];
@@ -62,6 +69,22 @@ fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(),
         }
 
         write!(f, " [{:02x}](#room-{:02x}) |", room_id, i)?;
+    }
+
+    writeln!(f, "")?;
+
+    if area_index < n.chest_table_pointers.len() {
+        writeln!(f, "## Chests\n")?;
+        writeln!(f, "| index | item id | arg | text | ?? |")?;
+        writeln!(f, "|-------|---------|-----|------|----|")?;
+        let chest_table = &n.chest_tables[&n.chest_table_pointers[area_index]];
+        for (i, chest) in chest_table.iter().enumerate() {
+            writeln!(
+                f,
+                "| {} | {:02x} | {:02x} | {:02x} | {:02x} |",
+                i, &chest.item_id, &chest.arg, &chest.text, &chest.unknown
+            )?;
+        }
     }
 
     writeln!(f, "## Rooms\n")?;

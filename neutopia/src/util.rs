@@ -16,6 +16,16 @@ pub fn pointer_to_rom_offset(data: &[u8]) -> Result<u32, Error> {
     }
 }
 
+pub fn rom_offset_to_pointer(offset: u32) -> [u8; 3] {
+    let addr = offset + 0x40000;
+
+    [
+        (addr >> 13) as u8,
+        (addr & 0xff) as u8,
+        (((addr >> 8) & 0x1f) as u8) | 0x40,
+    ]
+}
+
 pub fn decode_pointer_table(data: &[u8], entries: usize) -> Result<Vec<u32>, Error> {
     if data.len() < entries * 3 {
         return Err(format_err!(

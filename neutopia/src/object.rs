@@ -87,73 +87,48 @@ fn parse_object_info(i: &[u8]) -> IResult<&[u8], ObjectInfo> {
     Ok((i, ObjectInfo { x, y, id: id[0] }))
 }
 
-fn parse_object(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x00])(i)?;
-    let (i, info) = parse_object_info(i)?;
+macro_rules! gen_object_type {
+    ($func_name: ident, $tag: literal, $ty: ident) => {
+        fn $func_name(i: &[u8]) -> IResult<&[u8], TableEntry> {
+            let (i, _) = tag([$tag])(i)?;
+            let (i, info) = parse_object_info(i)?;
 
-    Ok((i, TableEntry::Object(info)))
+            Ok((i, TableEntry::$ty(info)))
+        }
+    };
 }
 
-fn parse_open_door(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x01])(i)?;
-    let (i, data) = take(1usize)(i)?;
+macro_rules! gen_u8_type {
+    ($func_name: ident, $tag: literal, $ty: ident) => {
+        fn $func_name(i: &[u8]) -> IResult<&[u8], TableEntry> {
+            let (i, _) = tag([$tag])(i)?;
+            let (i, data) = take(1usize)(i)?;
 
-    Ok((i, TableEntry::OpenDoor(data[0])))
+            Ok((i, TableEntry::$ty(data[0])))
+        }
+    };
 }
 
-fn parse_push_block_gated_door(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x02])(i)?;
-    let (i, data) = take(1usize)(i)?;
+macro_rules! gen_simple_type {
+    ($func_name: ident, $tag: literal, $ty: ident) => {
+        fn $func_name(i: &[u8]) -> IResult<&[u8], TableEntry> {
+            let (i, _) = tag([$tag])(i)?;
 
-    Ok((i, TableEntry::PushBlockGatedDoor(data[0])))
+            Ok((i, TableEntry::$ty))
+        }
+    };
 }
 
-fn parse_enemy_gated_door(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x03])(i)?;
-    let (i, data) = take(1usize)(i)?;
-
-    Ok((i, TableEntry::EnemyGatedDoor(data[0])))
-}
-
-fn parse_bombable_door(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x05])(i)?;
-    let (i, data) = take(1usize)(i)?;
-
-    Ok((i, TableEntry::BombableDoor(data[0])))
-}
-
-fn parse_push_block_gated_object(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x06])(i)?;
-    let (i, info) = parse_object_info(i)?;
-
-    Ok((i, TableEntry::PushBlockGatedObject(info)))
-}
-
-fn parse_enemy_gated_object(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x07])(i)?;
-    let (i, info) = parse_object_info(i)?;
-
-    Ok((i, TableEntry::EnemyGatedObject(info)))
-}
-
-fn parse_bell_gated_object(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x08])(i)?;
-    let (i, info) = parse_object_info(i)?;
-
-    Ok((i, TableEntry::BellGatedObject(info)))
-}
-
-fn parse_dark_room(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x09])(i)?;
-    Ok((i, TableEntry::DarkRoom))
-}
-
-fn parse_boss_door(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x0a])(i)?;
-    let (i, data) = take(1usize)(i)?;
-
-    Ok((i, TableEntry::BossDoor(data[0])))
-}
+gen_object_type!(parse_object, 0x00, Object);
+gen_u8_type!(parse_open_door, 0x01, OpenDoor);
+gen_u8_type!(parse_push_block_gated_door, 0x02, PushBlockGatedDoor);
+gen_u8_type!(parse_enemy_gated_door, 0x03, EnemyGatedDoor);
+gen_u8_type!(parse_bombable_door, 0x05, BombableDoor);
+gen_object_type!(parse_push_block_gated_object, 0x06, PushBlockGatedObject);
+gen_object_type!(parse_enemy_gated_object, 0x07, EnemyGatedObject);
+gen_object_type!(parse_bell_gated_object, 0x08, BellGatedObject);
+gen_simple_type!(parse_dark_room, 0x09, DarkRoom);
+gen_u8_type!(parse_boss_door, 0x0a, BossDoor);
 
 fn parse_unknown_0b(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0x0b])(i)?;
@@ -161,12 +136,7 @@ fn parse_unknown_0b(i: &[u8]) -> IResult<&[u8], TableEntry> {
     Ok((i, TableEntry::Unknown0b([data[0], data[1], data[2]])))
 }
 
-fn parse_burnable(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x0c])(i)?;
-    let (i, info) = parse_object_info(i)?;
-
-    Ok((i, TableEntry::Burnable(info)))
-}
+gen_object_type!(parse_burnable, 0x0c, Burnable);
 
 fn parse_hidden_room(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0x0d])(i)?;
@@ -174,10 +144,7 @@ fn parse_hidden_room(i: &[u8]) -> IResult<&[u8], TableEntry> {
     Ok((i, TableEntry::HiddenRoom([data[0], data[1]])))
 }
 
-fn parse_falcon_boots_needed(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0x81])(i)?;
-    Ok((i, TableEntry::FalconBootsNeeded))
-}
+gen_simple_type!(parse_falcon_boots_needed, 0x81, FalconBootsNeeded);
 
 fn parse_npc(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0x9a])(i)?;
@@ -188,40 +155,11 @@ fn parse_npc(i: &[u8]) -> IResult<&[u8], TableEntry> {
     ))
 }
 
-fn parse_ouch_rope(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0xbd])(i)?;
-    let (i, info) = parse_object_info(i)?;
-
-    Ok((i, TableEntry::OuchRope(info)))
-}
-
-fn parse_arrow_launcher(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0xbf])(i)?;
-    let (i, info) = parse_object_info(i)?;
-
-    Ok((i, TableEntry::ArrowLauncher(info)))
-}
-
-fn parse_swords(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0xc0])(i)?;
-    let (i, info) = parse_object_info(i)?;
-
-    Ok((i, TableEntry::Swords(info)))
-}
-
-fn parse_ghost_spawner(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0xc1])(i)?;
-    let (i, info) = parse_object_info(i)?;
-
-    Ok((i, TableEntry::GhostSpawner(info)))
-}
-
-fn parse_fireball_spawner(i: &[u8]) -> IResult<&[u8], TableEntry> {
-    let (i, _) = tag([0xc6])(i)?;
-    let (i, info) = parse_object_info(i)?;
-
-    Ok((i, TableEntry::FireballSpawner(info)))
-}
+gen_object_type!(parse_ouch_rope, 0xbd, OuchRope);
+gen_object_type!(parse_arrow_launcher, 0xbf, ArrowLauncher);
+gen_object_type!(parse_swords, 0xc0, Swords);
+gen_object_type!(parse_ghost_spawner, 0xc1, GhostSpawner);
+gen_object_type!(parse_fireball_spawner, 0xc6, FireballSpawner);
 
 fn parse_shop_item(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0xda])(i)?;

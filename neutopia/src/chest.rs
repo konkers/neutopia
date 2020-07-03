@@ -1,20 +1,12 @@
-use std::fmt;
-
 use failure::{format_err, Error};
-use nom::{
-    branch::alt,
-    bytes::complete::{tag, take},
-    multi::many0,
-    number::complete::le_u8,
-    IResult,
-};
+use nom::{multi::many_m_n, number::complete::le_u8, IResult};
 
 #[derive(Debug, PartialEq)]
 pub struct Chest {
-    item_id: u8,
-    arg: u8,
-    text: u8,
-    unknown: u8,
+    pub item_id: u8,
+    pub arg: u8,
+    pub text: u8,
+    pub unknown: u8,
 }
 
 fn parse_chest(i: &[u8]) -> IResult<&[u8], Chest> {
@@ -32,6 +24,13 @@ fn parse_chest(i: &[u8]) -> IResult<&[u8], Chest> {
             unknown,
         },
     ))
+}
+
+pub fn parse_chest_table(i: &[u8]) -> Result<Vec<Chest>, Error> {
+    let (_, table) =
+        many_m_n(8, 8, parse_chest)(i).map_err(|e| format_err!("parse error: {}", e))?;
+
+    Ok(table)
 }
 
 #[cfg(test)]

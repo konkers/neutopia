@@ -91,6 +91,11 @@ impl Neutopia {
             room_order_tables.insert(*room_order_ptr, table);
         }
 
+        for chest_table_ptr in &chest_table_pointers {
+            let table = chest::parse_chest_table(&data[*chest_table_ptr as usize..])?;
+            chest_tables.insert(*chest_table_ptr, table);
+        }
+
         Ok(Neutopia {
             area_pointers,
             room_order_pointers,

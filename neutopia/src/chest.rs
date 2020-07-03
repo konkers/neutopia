@@ -1,12 +1,26 @@
+use std::io::prelude::*;
+
+use byteorder::WriteBytesExt;
 use failure::{format_err, Error};
 use nom::{multi::many_m_n, number::complete::le_u8, IResult};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Chest {
     pub item_id: u8,
     pub arg: u8,
     pub text: u8,
     pub unknown: u8,
+}
+
+impl Chest {
+    pub fn write(&self, w: &mut impl Write) -> Result<(), Error> {
+        w.write_u8(self.item_id)?;
+        w.write_u8(self.arg)?;
+        w.write_u8(self.text)?;
+        w.write_u8(self.unknown)?;
+
+        Ok(())
+    }
 }
 
 fn parse_chest(i: &[u8]) -> IResult<&[u8], Chest> {

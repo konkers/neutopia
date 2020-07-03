@@ -76,6 +76,12 @@ jobs:
           command: clippy
           args: --manifest-path=neutil/Cargo.toml --all-targets
 
+      - name: cargo clippy rando
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --manifest-path=rando/Cargo.toml --all-targets
+
       - name: build
         uses: actions-rs/cargo@v1
         with:

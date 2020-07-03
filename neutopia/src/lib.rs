@@ -4,10 +4,11 @@ use failure::Error;
 
 mod chest;
 pub mod object;
-mod rommap;
-mod util;
+pub mod rommap;
+pub mod util;
 
 pub use chest::Chest;
+pub use object::ObjectInfo;
 
 #[derive(Debug)]
 pub struct Room {

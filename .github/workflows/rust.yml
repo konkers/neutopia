@@ -1,0 +1,87 @@
+# Heavily based on druid's workflow at
+#   https://github.com/xi-editor/druid/blob/76fba835605aa1c51e4f541d6a08ff94542f9b0a/.github/workflows/ci.yml
+
+name: Rust
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    name: cargo fmt
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+          override: true
+
+      - name: install rustfmt
+        run: rustup component add rustfmt
+
+      - name: cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  test-stable:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macOS-latest, windows-2019, ubuntu-latest]
+    name: cargo test
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-cargo-
+
+      - name: install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+          profile: minimal
+          override: true
+
+      # Clippy packages in deeper-to-higher dependency order
+      - name: cargo clippy neutopia
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --manifest-path=neutopia/Cargo.toml --all-targets
+
+      - name: cargo clippy neutil
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --manifest-path=neutil/Cargo.toml --all-targets
+
+      - name: build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+
+      - name: test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test

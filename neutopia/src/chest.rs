@@ -21,6 +21,57 @@ impl Chest {
 
         Ok(())
     }
+
+    pub fn get_item_name(&self) -> String {
+        return match self.item_id {
+            0 => format!("{} bombs", self.arg),
+            1 => format!("Medicine"),
+            2 => format!("Firewand"),
+            3 => format!("Sky Bell"),
+            4 => format!("Wings"),
+            5 => format!("Moonbeam Moss level {}", self.arg),
+            6 => format!("Magic Ring"),
+            7 => format!("Placeholder"),
+            8 => match self.arg {
+                1 => format!("Starter Sword"),
+                2 => format!("Blue Sword"),
+                3 => format!("Purple Sword"),
+                4 => format!("Red Sword"),
+                _ => format!("Unknown Sword"),
+            },
+            9 => match self.arg {
+                1 => format!("Starter Armor"),
+                2 => format!("Blue Armor"),
+                3 => format!("Purple Armor"),
+                4 => format!("Red Armor"),
+                _ => format!("Unknown Armor"),
+            },
+            10 => match self.arg {
+                1 => format!("Wood Shield"),
+                2 => format!("Steel Shield"),
+                3 => format!("Fire Shield"),
+                4 => format!("Blue Shield"),
+                _ => format!("Unknown Shield"),
+            },
+            11 => format!("Falcon Shoes"),
+            12 => format!("Rainbow Drop"),
+            13 => format!("Book of Revival"),
+            14 => format!("Placeholder"),
+            15 => format!("Placeholder"),
+            16 => format!("Crystal Ball"),
+            17 => format!("Crypt Key"),
+            18 => format!("Medallion"),
+            19 => format!("Medallion"),
+            20 => format!("Medallion"),
+            21 => format!("Medallion"),
+            22 => format!("Medallion"),
+            23 => format!("Medallion"),
+            24 => format!("Medallion"),
+            25 => format!("Medallion"),
+            26 => format!("Medallion"),
+            _ => format!("Unknown")
+        }
+    }
 }
 
 fn parse_chest(i: &[u8]) -> IResult<&[u8], Chest> {

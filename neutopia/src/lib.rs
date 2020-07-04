@@ -60,10 +60,7 @@ impl Neutopia {
 
                 // Todo, clean this up once everything parses.
                 let object_table = match object::object_table_len(&data[object_table_pointer..]) {
-                    Ok(len) => data[object_table_pointer..object_table_pointer + len]
-                        .iter()
-                        .cloned()
-                        .collect(),
+                    Ok(len) => data[object_table_pointer..object_table_pointer + len].to_vec(),
                     Err(_) => util::read_object_table(&data[object_table_pointer as usize..]),
                 };
 
@@ -78,7 +75,7 @@ impl Neutopia {
                             &data[(warp_table_pointer as usize)..(enemy_table_pointer as usize)],
                         ),
                         enemy_table: util::read_object_table(&data[enemy_table_pointer as usize..]),
-                        object_table: object_table,
+                        object_table,
                     },
                 );
             }

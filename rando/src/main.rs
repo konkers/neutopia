@@ -77,7 +77,7 @@ fn shuffle_area(
         neutopia::rommap::CHEST_TABLE as u64 + 3 * area_index as u64,
     ))?;
     let ptr = neutopia::util::rom_offset_to_pointer(offset as u32);
-    c.write(&ptr)?;
+    c.write_all(&ptr)?;
 
     Ok(())
 }
@@ -107,7 +107,7 @@ fn main() -> Result<(), Error> {
 
     let filename = &opt
         .out
-        .unwrap_or(PathBuf::from(format!("NR-{:#}.pce", radix_36(seed))));
+        .unwrap_or_else(|| PathBuf::from(format!("NR-{:#}.pce", radix_36(seed))));
     let mut f = File::create(filename)?;
     f.write_all(&buffer)?;
 

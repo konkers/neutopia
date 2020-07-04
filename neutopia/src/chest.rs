@@ -69,8 +69,8 @@ impl Chest {
             24 => format!("Medallion"),
             25 => format!("Medallion"),
             26 => format!("Medallion"),
-            _ => format!("Unknown")
-        }
+            _ => format!("Unknown"),
+        };
     }
 }
 

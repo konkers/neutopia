@@ -82,7 +82,12 @@ fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(),
             writeln!(
                 f,
                 "| {} | {:02x} | {:02x} | {:02x} | {:02x} | {} |",
-                i, &chest.item_id, &chest.arg, &chest.text, &chest.unknown, chest.get_item_name()
+                i,
+                &chest.item_id,
+                &chest.arg,
+                &chest.text,
+                &chest.unknown,
+                chest.get_item_name()
             )?;
         }
     }

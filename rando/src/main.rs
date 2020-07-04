@@ -35,7 +35,8 @@ fn shuffle_area(
     // First find all the chests
     let mut chest_ids = Vec::new();
     let mut chest_contents = Vec::new();
-    for (_, room) in room_info_table {
+    for room_id in 0u8..0x40 {
+        let room = &room_info_table[&room_id];
         let object_table = parse_object_table(&room.object_table)?;
         for entry in &object_table {
             if let object::TableEntry::Object(info) = entry {

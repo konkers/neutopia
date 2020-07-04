@@ -9,7 +9,7 @@ use rand_core::SeedableRng;
 use rand_pcg::Pcg32;
 use structopt::StructOpt;
 
-use neutopia::{object, object::parse_object_table, Neutopia, Chest};
+use neutopia::{object, object::parse_object_table, Chest, Neutopia};
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
 struct Opt {
@@ -24,9 +24,9 @@ struct Opt {
 }
 
 /*
-    Returns a list of chests that are allowed to be randomized (so no crypt keys, crystal balls or medallions are returned here)
-    All these chests are piled on one big heap, randomized and passed into write_new_chests_for_area.
- */
+   Returns a list of chests that are allowed to be randomized (so no crypt keys, crystal balls or medallions are returned here)
+   All these chests are piled on one big heap, randomized and passed into write_new_chests_for_area.
+*/
 fn get_randomizable_chests_for_area(n: &Neutopia, area_index: usize) -> Vec<Chest> {
     let room_info_table = &n.room_info_tables[area_index];
     let chest_table = &n.chest_tables[&n.chest_table_pointers[area_index]];
@@ -54,14 +54,14 @@ fn get_randomizable_chests_for_area(n: &Neutopia, area_index: usize) -> Vec<Ches
 }
 
 /*
-    Takes a list of all (remaining) randomizable chests, pops them off one by one for chests it can randomize into
- */
+   Takes a list of all (remaining) randomizable chests, pops them off one by one for chests it can randomize into
+*/
 fn write_new_chests_for_area(
     rng: &mut impl Rng,
     n: &Neutopia,
     area_index: usize,
     data: &mut [u8],
-    randomizable_chests: &mut Vec<Chest>
+    randomizable_chests: &mut Vec<Chest>,
 ) -> Result<(), Error> {
     let room_info_table = &n.room_info_tables[area_index];
     let chest_table = &n.chest_tables[&n.chest_table_pointers[area_index]];
@@ -83,7 +83,7 @@ fn write_new_chests_for_area(
                             chest_ids.push(id);
                             chest_contents.push(randomizable_chest);
                         } else {
-                            return Err(format_err!("Terrible error, ran out of chests! T_T"))
+                            return Err(format_err!("Terrible error, ran out of chests! T_T"));
                         }
                     }
                 }

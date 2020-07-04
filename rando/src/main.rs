@@ -112,7 +112,7 @@ fn write_new_chests_for_area(
         neutopia::rommap::CHEST_TABLE as u64 + 3 * area_index as u64,
     ))?;
     let ptr = neutopia::util::rom_offset_to_pointer(offset as u32);
-    c.write(&ptr)?;
+    c.write_all(&ptr)?;
 
     Ok(())
 }
@@ -136,7 +136,6 @@ fn main() -> Result<(), Error> {
 
     let n = Neutopia::new(&buffer)?;
 
-
     let mut chest_pairs = Vec::new();
     for i in 0..=0xf {
         let mut chests = get_randomizable_chests_for_area(&n, i);
@@ -150,7 +149,7 @@ fn main() -> Result<(), Error> {
 
     let filename = &opt
         .out
-        .unwrap_or(PathBuf::from(format!("neutopia-NR-{:#}.pce", radix_36(seed))));
+        .unwrap_or_else(|| PathBuf::from(format!("neutopia-NR-{:#}.pce", radix_36(seed))));
     let mut f = File::create(filename)?;
     f.write_all(&buffer)?;
 

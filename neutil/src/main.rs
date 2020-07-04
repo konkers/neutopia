@@ -17,7 +17,7 @@ struct Opt {
     outdir: PathBuf,
 }
 
-fn write_byte_array(f: &mut File, data: &Vec<u8>) -> Result<(), Error> {
+fn write_byte_array(f: &mut File, data: &[u8]) -> Result<(), Error> {
     write!(f, "```\n[")?;
     for (i, val) in data.iter().enumerate() {
         if i != 0 {
@@ -56,7 +56,7 @@ fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(),
             n.chest_table_pointers[area_index]
         )?;
     }
-    write!(f, "\n")?;
+    writeln!(f)?;
 
     let addr = n.room_order_pointers[area_index];
     let table = &n.room_order_tables[&addr];
@@ -71,7 +71,7 @@ fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(),
         write!(f, " [{:02x}](#room-{:02x}) |", room_id, i)?;
     }
 
-    writeln!(f, "")?;
+    writeln!(f)?;
 
     if area_index < n.chest_table_pointers.len() {
         writeln!(f, "## Chests\n")?;
@@ -89,7 +89,7 @@ fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(),
 
     writeln!(f, "## Rooms\n")?;
     let rooms = &n.room_info_tables[area_index];
-    let mut room_ids: Vec<u8> = rooms.keys().map(|x| *x).collect();
+    let mut room_ids: Vec<u8> = rooms.keys().copied().collect();
     room_ids.sort();
 
     for room_id in room_ids {
@@ -111,7 +111,7 @@ fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(),
             "| object table ptr | {:05x} |",
             room.object_table_pointer
         )?;
-        write!(f, "\n")?;
+        writeln!(f)?;
 
         writeln!(f, "#### Warp Table\n")?;
         write_byte_array(&mut f, &room.warp_table)?;
@@ -126,7 +126,7 @@ fn write_area_markdown(opt: &Opt, n: &Neutopia, area_index: usize) -> Result<(),
                 for entry in &table {
                     writeln!(f, "- {}", entry)?;
                 }
-                writeln!(f, "")?;
+                writeln!(f)?;
             }
             Err(e) => println!(
                 "Can't parse object table area {:02x} room {:02x}: {}",

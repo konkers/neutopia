@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{prelude::*, Cursor, SeekFrom};
+use std::io::prelude::*;
 use std::path::PathBuf;
 
 use failure::{format_err, Error};
@@ -9,7 +9,7 @@ use rand_core::SeedableRng;
 use rand_pcg::Pcg32;
 use structopt::StructOpt;
 
-use neutopia::{object, object::parse_object_table, Chest, Neutopia};
+use randolib::randomize_rom;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
 struct Opt {
@@ -21,96 +21,6 @@ struct Opt {
 
     #[structopt(long)]
     seed: Option<String>,
-}
-
-// Returns a list of chests that are allowed to be randomized (so no crypt keys, crystal balls or medallions are returned here)
-// All these chests are piled on one big heap, randomized and passed into write_new_chests_for_area.
-fn get_randomizable_chests_for_area(n: &Neutopia, area_index: usize) -> Vec<Chest> {
-    let room_info_table = &n.room_info_tables[area_index];
-    let chest_table = &n.chest_tables[&n.chest_table_pointers[area_index]];
-
-    // find all chests that are OK to randomize
-    let mut chests = Vec::new();
-    for room_id in 0u8..0x40 {
-        let room = &room_info_table[&room_id];
-        let object_table = parse_object_table(&room.object_table).unwrap_or_default();
-        for entry in &object_table {
-            if let object::TableEntry::Object(info) = entry {
-                if 0x4c <= info.id && info.id <= (0x4c + 8) {
-                    let id = info.id - 0x4c;
-                    let chest = &chest_table[id as usize];
-
-                    // Ensure it is not the medallion, crypt key or crystal ball.
-                    if chest.item_id < 0x10 || chest.item_id >= (0x12 + 8) {
-                        chests.push(chest.clone());
-                    }
-                }
-            }
-        }
-    }
-
-    chests
-}
-
-// Takes a list of all (remaining) randomizable chests, pops them off one by one for chests it can randomize into
-fn write_new_chests_for_area(
-    n: &Neutopia,
-    area_index: usize,
-    data: &mut [u8],
-    randomizable_chests: &mut Vec<Chest>,
-) -> Result<(), Error> {
-    let room_info_table = &n.room_info_tables[area_index];
-    let chest_table = &n.chest_tables[&n.chest_table_pointers[area_index]];
-
-    // find all chests that are OK to randomize and replace them with the top chest in randomizable_chests
-    let mut chest_ids = Vec::new();
-    let mut chest_contents = Vec::new();
-    for room_id in 0u8..0x40 {
-        let room = &room_info_table[&room_id];
-        let object_table = parse_object_table(&room.object_table)?;
-        for entry in &object_table {
-            if let object::TableEntry::Object(info) = entry {
-                if 0x4c <= info.id && info.id <= (0x4c + 8) {
-                    let id = info.id - 0x4c;
-                    let chest = &chest_table[id as usize];
-
-                    // Ensure it is not the medallion, crypt key or crystal ball.
-                    if chest.item_id < 0x10 || chest.item_id >= (0x12 + 8) {
-                        if let Some(randomizable_chest) = randomizable_chests.pop() {
-                            chest_ids.push(id);
-                            chest_contents.push(randomizable_chest);
-                        } else {
-                            return Err(format_err!("Terrible error, ran out of chests! T_T"));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Patch up a new chest table
-    let mut new_chest_table = chest_table.clone();
-    for (chest_id, contents) in chest_ids.iter().zip(chest_contents.iter()) {
-        new_chest_table[*chest_id as usize] = contents.clone();
-    }
-
-    let mut c = Cursor::new(data);
-
-    // Write the new table to some unused memory.
-    let offset = 0x4fe00 + (0x20 * area_index as u64);
-    c.seek(SeekFrom::Start(offset))?;
-    for chest in &new_chest_table {
-        chest.write(&mut c)?;
-    }
-
-    // Update the area's chest table pointer.
-    c.seek(SeekFrom::Start(
-        neutopia::rommap::CHEST_TABLE as u64 + 3 * area_index as u64,
-    ))?;
-    let ptr = neutopia::util::rom_offset_to_pointer(offset as u32);
-    c.write_all(&ptr)?;
-
-    Ok(())
 }
 
 fn main() -> Result<(), Error> {
@@ -130,22 +40,7 @@ fn main() -> Result<(), Error> {
     // read the whole file
     f.read_to_end(&mut buffer)?;
 
-    let n = Neutopia::new(&buffer)?;
-
-    // get all chests that are allowed to be randomized from the areas and put them on one big heap
-    let mut randomizable_chests = Vec::new();
-    for i in 0..=0xf {
-        let mut chests = get_randomizable_chests_for_area(&n, i);
-        randomizable_chests.append(&mut chests);
-    }
-
-    // shuffle!
-    randomizable_chests.shuffle(&mut rng);
-
-    // Have each area pick chests from the heap one by one and pass the remaining to the next area
-    for i in 0..=0xf {
-        write_new_chests_for_area(&n, i, &mut buffer, &mut randomizable_chests)?;
-    }
+    randomize_rom(&mut buffer, &mut rng)?;
 
     let filename = &opt
         .out

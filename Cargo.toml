@@ -3,5 +3,7 @@
 members = [
     "neutil",
     "neutopia",
+    "randolib",
     "rando",
+    "randofrontend",
 ]

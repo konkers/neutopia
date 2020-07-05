@@ -11,3 +11,11 @@ Cargo.lock
 
 # Ignore any ROM files
 **/*.pce
+
+# Ignore all npm related stuff
+node_modules/
+package-lock.json
+pkg/
+
+# Ignore jetbrains folder
+.idea

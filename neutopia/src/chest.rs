@@ -21,6 +21,57 @@ impl Chest {
 
         Ok(())
     }
+
+    pub fn get_item_name(&self) -> String {
+        return match self.item_id {
+            0 => format!("{} bombs", self.arg),
+            1 => format!("Medicine"),
+            2 => format!("Firewand"),
+            3 => format!("Sky Bell"),
+            4 => format!("Wings"),
+            5 => format!("Moonbeam Moss level {}", self.arg),
+            6 => format!("Magic Ring"),
+            7 => format!("Placeholder"),
+            8 => match self.arg {
+                1 => format!("Starter Sword"),
+                2 => format!("Bronze Sword"),
+                3 => format!("Steel Sword"),
+                4 => format!("Strongest Sword"),
+                _ => format!("Unknown Sword"),
+            },
+            9 => match self.arg {
+                1 => format!("Starter Armor"),
+                2 => format!("Bronze Armor"),
+                3 => format!("Steel Armor"),
+                4 => format!("Strongest Armor"),
+                _ => format!("Unknown Armor"),
+            },
+            10 => match self.arg {
+                1 => format!("Starter Shield"),
+                2 => format!("Bronze Shield"),
+                3 => format!("Steel Shield"),
+                4 => format!("Strongest Shield"),
+                _ => format!("Unknown Shield"),
+            },
+            11 => format!("Falcon Shoes"),
+            12 => format!("Rainbow Drop"),
+            13 => format!("Book of Revival"),
+            14 => format!("Placeholder"),
+            15 => format!("Placeholder"),
+            16 => format!("Crystal Ball"),
+            17 => format!("Crypt Key"),
+            18 => format!("Crypt 1 Medallion"),
+            19 => format!("Crypt 2 Medallion"),
+            20 => format!("Crypt 3 Medallion"),
+            21 => format!("Crypt 4 Medallion"),
+            22 => format!("Crypt 5 Medallion"),
+            23 => format!("Crypt 6 Medallion"),
+            24 => format!("Crypt 7 Medallion"),
+            25 => format!("Crypt 8 Medallion"),
+            26 => format!("Placeholder"),
+            _ => format!("Unknown"),
+        };
+    }
 }
 
 fn parse_chest(i: &[u8]) -> IResult<&[u8], Chest> {

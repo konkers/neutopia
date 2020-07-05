@@ -58,10 +58,8 @@ pub fn write_new_chests_for_area(
 
                     // Ensure it is not the medallion, crypt key or crystal ball.
                     if chest.item_id < 0x10 || chest.item_id >= (0x12 + 8) {
-                        if let Some(mut randomizable_chest) = randomizable_chests.pop() {
+                        if let Some(randomizable_chest) = randomizable_chests.pop() {
                             chest_ids.push(id);
-                            randomizable_chest.item_id = 9;
-                            randomizable_chest.arg = 3;
                             chest_contents.push(randomizable_chest);
                         } else {
                             return Err(format_err!("Terrible error, ran out of chests! T_T"));

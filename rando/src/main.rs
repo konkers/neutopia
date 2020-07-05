@@ -49,7 +49,7 @@ fn get_randomizable_chests_for_area(n: &Neutopia, area_index: usize) -> Vec<Ches
         }
     }
 
-    return chests;
+    chests
 }
 
 // Takes a list of all (remaining) randomizable chests, pops them off one by one for chests it can randomize into

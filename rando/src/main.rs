@@ -54,7 +54,6 @@ fn get_randomizable_chests_for_area(n: &Neutopia, area_index: usize) -> Vec<Ches
 
 // Takes a list of all (remaining) randomizable chests, pops them off one by one for chests it can randomize into
 fn write_new_chests_for_area(
-    rng: &mut impl Rng,
     n: &Neutopia,
     area_index: usize,
     data: &mut [u8],
@@ -145,7 +144,7 @@ fn main() -> Result<(), Error> {
 
     // Have each area pick chests from the heap one by one and pass the remaining to the next area
     for i in 0..=0xf {
-        write_new_chests_for_area(&mut rng, &n, i, &mut buffer, &mut randomizable_chests)?;
+        write_new_chests_for_area(&n, i, &mut buffer, &mut randomizable_chests)?;
     }
 
     let filename = &opt

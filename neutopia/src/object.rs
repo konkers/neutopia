@@ -10,7 +10,7 @@ use nom::{
     IResult,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ObjectInfo {
     pub x: u8,
     pub y: u8,
@@ -23,7 +23,7 @@ impl fmt::Display for ObjectInfo {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TableEntry {
     Object(ObjectInfo),
     OpenDoor(u8),
@@ -79,7 +79,31 @@ impl TableEntry {
         }
         Ok(())
     }
+
+    pub fn chest_id(&self) -> Option<u8> {
+        if let Self::Object(o) = self {
+            if 0x4c <= o.id && o.id <= (0x4c + 8) {
+                return Some(o.id - 0x4c);
+            }
+        }
+        None
+    }
+
+    pub fn is_conditional(&self) -> bool {
+        match self {
+            Self::Unknown0b(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn loc(&self) -> Option<(u8, u8)> {
+        match self {
+            Self::Object(o) => Some((o.x, o.y)),
+            _ => None,
+        }
+    }
 }
+
 impl fmt::Display for TableEntry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

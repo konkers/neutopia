@@ -4,7 +4,7 @@ use byteorder::WriteBytesExt;
 use failure::{format_err, Error};
 use nom::{multi::many_m_n, number::complete::le_u8, IResult};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Chest {
     pub item_id: u8,
     pub arg: u8,

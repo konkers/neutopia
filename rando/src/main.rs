@@ -94,7 +94,6 @@ fn write_new_chests_for_area(
     for (chest_id, contents) in chest_ids.iter().zip(chest_contents.iter()) {
         new_chest_table[*chest_id as usize] = contents.clone();
     }
-    new_chest_table.shuffle(rng);
 
     let mut c = Cursor::new(data);
 

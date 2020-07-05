@@ -68,19 +68,19 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --manifest-path=neutopia/Cargo.toml --all-targets
+          args: --manifest-path=neutopia/Cargo.toml --all-targets -- -D warnings
 
       - name: cargo clippy neutil
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --manifest-path=neutil/Cargo.toml --all-targets
+          args: --manifest-path=neutil/Cargo.toml --all-targets -- -D warnings
 
       - name: cargo clippy rando
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --manifest-path=rando/Cargo.toml --all-targets
+          args: --manifest-path=rando/Cargo.toml --all-targets -- -D warnings
 
       - name: build
         uses: actions-rs/cargo@v1

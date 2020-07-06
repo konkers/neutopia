@@ -14,7 +14,7 @@ use neutopia::{self, object, object::parse_object_table, Neutopia};
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
 struct Opt {
-    #[structopt(long, parse(from_os_str), default_value = "neutopia-jp.pce")]
+    #[structopt(long, parse(from_os_str), default_value = "Neutopia (USA).pce")]
     rom: PathBuf,
 
     #[structopt(long, parse(from_os_str))]

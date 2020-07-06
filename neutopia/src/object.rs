@@ -10,7 +10,7 @@ use nom::{
     IResult,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ObjectInfo {
     pub x: u8,
     pub y: u8,
@@ -23,7 +23,7 @@ impl fmt::Display for ObjectInfo {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TableEntry {
     Object(ObjectInfo),
     OpenDoor(u8),

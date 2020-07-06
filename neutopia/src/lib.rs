@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use failure::Error;
+use failure::{format_err, Error};
 
 mod chest;
 pub mod object;
@@ -48,12 +48,27 @@ impl Neutopia {
         let mut room_order_tables = HashMap::new();
         let mut chest_tables = HashMap::new();
 
-        for area_ptr in &area_pointers {
+        for (area_idx, area_ptr) in area_pointers.iter().enumerate() {
             let mut area_info = HashMap::new();
             for idx in 0..0x40 {
                 let offset = (*area_ptr as usize) + (idx as usize) * 3;
-                let offset = util::pointer_to_rom_offset(&data[offset..])? as usize;
-                let ptrs = util::decode_pointer_table(&data[offset..], 3)?;
+                let offset = util::pointer_to_rom_offset(&data[offset..]).map_err(|e| {
+                    format_err!(
+                        "can't decode room pointer {:02x}:{:02x}: {}",
+                        area_idx,
+                        idx,
+                        e
+                    )
+                })? as usize;
+
+                let ptrs = util::decode_pointer_table(&data[offset..], 3).map_err(|e| {
+                    format_err!(
+                        "can't decode room table pointers {:02x}:{:02x}: {}",
+                        area_idx,
+                        idx,
+                        e
+                    )
+                })?;
                 let warp_table_pointer = ptrs[0];
                 let enemy_table_pointer = ptrs[1];
                 let object_table_pointer = ptrs[2] as usize;

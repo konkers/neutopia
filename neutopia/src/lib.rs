@@ -6,9 +6,11 @@ mod chest;
 pub mod object;
 pub mod rommap;
 pub mod util;
+pub mod verify;
 
 pub use chest::Chest;
 pub use object::ObjectInfo;
+pub use verify::{verify, RomInfo};
 
 #[derive(Debug)]
 pub struct Room {

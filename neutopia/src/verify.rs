@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use failure::{format_err, Error};
 use lazy_static::lazy_static;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Region {
     NA,
     JP,
@@ -13,6 +13,7 @@ pub enum Region {
 pub struct RomInfo {
     pub headered: bool,
     pub md5_hash: String,
+    pub known: bool,
     pub desc: String,
     pub region: Region,
 }
@@ -72,10 +73,12 @@ pub fn verify(data: &[u8]) -> Result<RomInfo, Error> {
     let md5_hash = format!("{:x}", digest);
 
     let db_entry = KNOWN_ROMS.get(&md5_hash).map_or(Default::default(), |o| *o);
+    let known = KNOWN_ROMS.contains_key(&md5_hash);
 
     Ok(RomInfo {
         headered,
         md5_hash,
+        known,
         desc: db_entry.desc.into(),
         region: db_entry.region,
     })

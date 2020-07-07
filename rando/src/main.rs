@@ -10,7 +10,7 @@ use rand_core::SeedableRng;
 use rand_pcg::Pcg32;
 use structopt::StructOpt;
 
-use neutopia::{self, object, object::parse_object_table, Neutopia};
+use neutopia::{self, object, object::parse_object_table, verify::Region, Neutopia};
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
 struct Opt {
@@ -333,6 +333,29 @@ fn global_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
     rando.write()
 }
 
+fn verify_rom(data: &[u8]) -> Result<&[u8], Error> {
+    // Verify
+    let info = neutopia::verify(&data)?;
+    if !info.known {
+        return Err(format_err!(
+            "Rom with MD5 hash {} is unrecognized.",
+            &info.md5_hash
+        ));
+    }
+    if info.region != Region::NA {
+        return Err(format_err!(
+            "Region {:?} rom not supported.  Please use NA rom.",
+            &info.region
+        ));
+    }
+
+    if info.headered {
+        Ok(&data[0x200..])
+    } else {
+        Ok(data)
+    }
+}
+
 fn main() -> Result<(), Error> {
     let opt = Opt::from_args();
 
@@ -349,13 +372,13 @@ fn main() -> Result<(), Error> {
     let mut buffer = Vec::new();
     // read the whole file
     f.read_to_end(&mut buffer)?;
-    // drop mutability of buffer
-    let buffer = buffer;
+
+    let buffer = verify_rom(&buffer)?;
 
     let new_data = if opt.global {
-        global_rando(&mut rng, &buffer)?
+        global_rando(&mut rng, buffer)?
     } else {
-        crypt_rando(&mut rng, &buffer)?
+        crypt_rando(&mut rng, buffer)?
     };
     let filename = &opt
         .out

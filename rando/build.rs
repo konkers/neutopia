@@ -1,0 +1,56 @@
+use std::env;
+use std::fs;
+use std::path::PathBuf;
+
+use failure::Error;
+
+#[cfg(target_os = "macos")]
+fn os_type() -> &'static str {
+    "macos"
+}
+
+#[cfg(target_os = "windows")]
+fn os_type() -> &'static str {
+    "windows"
+}
+
+#[cfg(target_os = "linux")]
+fn os_type() -> &'static str {
+    "linux"
+}
+
+fn bass_path() -> PathBuf {
+    PathBuf::from("../build/bin").join(os_type()).join("bass")
+}
+
+fn handle_asm(path: &PathBuf) -> Result<(), Error> {
+    let bass = bass_path();
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let tmp_dir = out_path.join("asm_build");
+
+    let ips = path.with_extension("ips");
+    let ips = ips.file_name().unwrap();
+    let ips = out_path.join("asm").join(PathBuf::from(&ips));
+
+    fs::create_dir_all(ips.parent().unwrap())?;
+    fs::create_dir_all(&tmp_dir)?;
+    asm_build::build(&bass, 0x60000, &tmp_dir, &[path.clone()], &ips)?;
+    Ok(())
+}
+
+fn main() -> Result<(), Error> {
+    println!("cargo:rerun-if-changed=src/asm");
+    for entry in fs::read_dir("src/asm")? {
+        let path = entry?.path();
+        if path.is_file() {
+            if let Some(ext) = path.extension() {
+                if ext == "asm" {
+                    println!("cargo:rerun-if-changed={}", path.to_string_lossy());
+                    handle_asm(&path)?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}

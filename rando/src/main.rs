@@ -4,6 +4,7 @@ use std::io::{prelude::*, Cursor, SeekFrom};
 use std::path::PathBuf;
 
 use failure::{format_err, Error};
+use ips::Patch;
 use radix_fmt::radix_36;
 use rand::{self, prelude::*};
 use rand_core::SeedableRng;
@@ -11,6 +12,9 @@ use rand_pcg::Pcg32;
 use structopt::StructOpt;
 
 use neutopia::{self, object, object::parse_object_table, verify::Region, Neutopia};
+
+mod patches;
+
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
 struct Opt {
@@ -333,7 +337,7 @@ fn global_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
     rando.write()
 }
 
-fn verify_rom(data: &[u8]) -> Result<&[u8], Error> {
+fn verify_rom(data: Vec<u8>) -> Result<Vec<u8>, Error> {
     // Verify
     let info = neutopia::verify(&data)?;
     if !info.known {
@@ -350,10 +354,29 @@ fn verify_rom(data: &[u8]) -> Result<&[u8], Error> {
     }
 
     if info.headered {
-        Ok(&data[0x200..])
+        Ok(data[0x200..].to_vec())
     } else {
         Ok(data)
     }
+}
+
+fn apply_patch<W: Write + Seek>(w: &mut W, patch_data: &[u8]) -> Result<(), Error> {
+    let patch = Patch::parse(patch_data)?;
+
+    for hunk in patch.hunks() {
+        w.seek(SeekFrom::Start(hunk.offset() as u64))?;
+        w.write_all(hunk.payload())?;
+    }
+
+    Ok(())
+}
+
+fn apply_patches(data: &mut [u8]) -> Result<(), Error> {
+    let mut c = Cursor::new(data);
+    for patch in patches::PATCHES.iter() {
+        apply_patch(&mut c, patch)?;
+    }
+    Ok(())
 }
 
 fn main() -> Result<(), Error> {
@@ -373,12 +396,14 @@ fn main() -> Result<(), Error> {
     // read the whole file
     f.read_to_end(&mut buffer)?;
 
-    let buffer = verify_rom(&buffer)?;
+    let mut buffer = verify_rom(buffer)?;
+
+    apply_patches(&mut buffer)?;
 
     let new_data = if opt.global {
-        global_rando(&mut rng, buffer)?
+        global_rando(&mut rng, &buffer)?
     } else {
-        crypt_rando(&mut rng, buffer)?
+        crypt_rando(&mut rng, &buffer)?
     };
     let filename = &opt
         .out

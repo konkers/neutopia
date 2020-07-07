@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "build/asm_build",
     "neutil",
     "neutopia",
     "rando",

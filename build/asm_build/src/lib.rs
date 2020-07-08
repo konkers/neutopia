@@ -8,7 +8,13 @@ use failure::{format_err, Error};
 
 fn make_target_file<P: AsRef<Path>>(path: P, size: usize, value: u8) -> Result<(), Error> {
     let data: Vec<u8> = vec![value; size];
-    let mut f = File::create(path)?;
+    let mut f = File::create(&path).map_err(|e| {
+        format_err!(
+            "unable to create temporary file {}: {}",
+            path.as_ref().to_string_lossy(),
+            e
+        )
+    })?;
     f.write_all(&data)?;
 
     Ok(())
@@ -17,11 +23,13 @@ fn make_target_file<P: AsRef<Path>>(path: P, size: usize, value: u8) -> Result<(
 fn run_bass(bass: &PathBuf, source: &PathBuf, out: &PathBuf) -> Result<(), Error> {
     let out = Command::new(bass)
         .args(&["-o", &out.to_string_lossy(), &source.to_string_lossy()])
-        .output()?;
+        .output()
+        .map_err(|e| format_err!("failed to execute {}: {}", bass.to_string_lossy(), e))?;
 
     if !out.status.success() {
         return Err(format_err!("bass error: {}", out.status));
     }
+
     Ok(())
 }
 
@@ -101,7 +109,8 @@ pub fn build(
         hunks.append(&mut new_hunks);
     }
 
-    let mut f = File::create(out)?;
+    let mut f = File::create(out)
+        .map_err(|e| format_err!("failed to create ips file {}: {}", out.to_string_lossy(), e))?;
     write_ips(&mut f, &hunks)?;
 
     Ok(())

@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     name: cargo fmt
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
 
       - name: install stable toolchain
         uses: actions-rs/toolchain@v1

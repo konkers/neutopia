@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 
-use failure::Error;
+use failure::{format_err, Error};
 
 #[cfg(target_os = "macos")]
 fn os_type() -> &'static str {
@@ -34,9 +34,17 @@ fn handle_asm(path: &PathBuf) -> Result<(), Error> {
     let ips = ips.file_name().unwrap();
     let ips = out_path.join("asm").join(PathBuf::from(&ips));
 
-    fs::create_dir_all(ips.parent().unwrap())?;
-    fs::create_dir_all(&tmp_dir)?;
-    asm_build::build(&bass, 0x60000, &tmp_dir, &[path.clone()], &ips)?;
+    fs::create_dir_all(ips.parent().unwrap()).map_err(|e| {
+        format_err!(
+            "unable to create dir {}: {}",
+            ips.parent().unwrap().to_string_lossy(),
+            e
+        )
+    })?;
+    fs::create_dir_all(&tmp_dir)
+        .map_err(|e| format_err!("unable to create dir {}: {}", tmp_dir.to_string_lossy(), e))?;
+    asm_build::build(&bass, 0x60000, &tmp_dir, &[path.clone()], &ips)
+        .map_err(|e| format_err!("asm_build failed: {}", e))?;
     Ok(())
 }
 

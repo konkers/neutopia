@@ -15,9 +15,13 @@ fn make_target_file<P: AsRef<Path>>(path: P, size: usize, value: u8) -> Result<(
 }
 
 fn run_bass(bass: &PathBuf, source: &PathBuf, out: &PathBuf) -> Result<(), Error> {
-    let _out = Command::new(bass)
+    let out = Command::new(bass)
         .args(&["-o", &out.to_string_lossy(), &source.to_string_lossy()])
         .output()?;
+
+    if !out.status.success() {
+        return Err(format_err!("bass error: {}", out.status));
+    }
     Ok(())
 }
 

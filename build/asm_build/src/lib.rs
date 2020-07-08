@@ -71,13 +71,13 @@ fn diff_files(zeros_path: &PathBuf, effs_path: &PathBuf) -> Result<Vec<Hunk>, Er
 }
 
 fn write_ips(w: &mut impl Write, hunks: &[Hunk]) -> Result<(), Error> {
-    w.write_all("PATCH".as_bytes())?;
+    w.write_all(b"PATCH")?;
     for hunk in hunks {
         w.write_u24::<BigEndian>(hunk.offset)?;
         w.write_u16::<BigEndian>(hunk.data.len() as u16)?;
-        w.write(&hunk.data)?;
+        w.write_all(&hunk.data)?;
     }
-    w.write_all("EOF".as_bytes())?;
+    w.write_all(b"EOF")?;
     Ok(())
 }
 

@@ -19,10 +19,20 @@ fn os_type() -> &'static str {
     "linux"
 }
 
+#[cfg(target_os = "windows")]
+fn exe_suffix() -> &'static str {
+    ".exe"
+}
+
+#[cfg(not(target_os = "windows"))]
+fn exe_suffix() -> &'static str {
+    ""
+}
+
 fn bass_path() -> PathBuf {
     PathBuf::from("../build/bin")
         .join(os_type())
-        .join("bass.exe")
+        .join(format!("bass{}", exe_suffix()))
 }
 
 fn handle_asm(path: &PathBuf) -> Result<(), Error> {

@@ -8,6 +8,7 @@ use radix_fmt::radix_36;
 use rand::{self, prelude::*};
 use rand_core::SeedableRng;
 use rand_pcg::Pcg32;
+use serde::{Deserialize, Serialize};
 
 mod patches;
 
@@ -38,6 +39,23 @@ pub struct Config {
 pub struct RandomizedGame {
     pub seed: String,
     pub data: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+pub enum Gate {
+    RainbowDrop,
+    FalconShoes,
+    FireWand,
+    Bell,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Check {
+    pub name: String,
+    pub area: u8,
+    pub room: u8,
+    pub gates: Vec<Gate>,
 }
 
 // Shuffle all items within each crypt.  Does not touch overworld items.

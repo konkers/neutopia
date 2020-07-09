@@ -25,7 +25,7 @@ pub struct Room {
     pub object_table: Vec<u8>,
 }
 
-pub struct Neutopia {
+pub struct NeutopiaRom {
     pub area_pointers: Vec<u32>,
     pub room_order_pointers: Vec<u32>,
     pub chest_table_pointers: Vec<u32>,
@@ -35,8 +35,8 @@ pub struct Neutopia {
     pub chest_tables: HashMap<u32, Vec<Chest>>,
 }
 
-impl Neutopia {
-    pub fn new(data: &[u8]) -> Result<Neutopia, Error> {
+impl NeutopiaRom {
+    pub fn new(data: &[u8]) -> Result<NeutopiaRom, Error> {
         let area_pointers =
             util::decode_pointer_table(&data[rommap::AREA_TABLE..], rommap::AREA_TABLE_COUNT)?;
         let room_order_pointers = util::decode_pointer_table(
@@ -111,7 +111,7 @@ impl Neutopia {
             chest_tables.insert(*chest_table_ptr, table);
         }
 
-        Ok(Neutopia {
+        Ok(NeutopiaRom {
             area_pointers,
             room_order_pointers,
             chest_table_pointers,

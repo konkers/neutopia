@@ -11,7 +11,7 @@ use rand_core::SeedableRng;
 use rand_pcg::Pcg32;
 use structopt::{clap::arg_enum, StructOpt};
 
-use neutopia::{self, object, object::parse_object_table, verify::Region, Neutopia};
+use neutopia::{self, object, object::parse_object_table, verify::Region, NeutopiaRom};
 
 mod patches;
 
@@ -69,13 +69,13 @@ struct Randomizer {
     pub areas: Vec<Area>,
     pub conditionals: HashMap<neutopia::Chest, Conditional>,
     pub rom_data: Vec<u8>,
-    n: Neutopia,
+    n: NeutopiaRom,
 }
 
 impl Randomizer {
     pub fn new(data: &[u8]) -> Result<Randomizer, Error> {
         let mut rando = Randomizer {
-            n: Neutopia::new(data)?,
+            n: NeutopiaRom::new(data)?,
             areas: Vec::new(),
             conditionals: HashMap::new(),
             rom_data: Vec::from(data),

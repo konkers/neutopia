@@ -9,11 +9,20 @@ use radix_fmt::radix_36;
 use rand::{self, prelude::*};
 use rand_core::SeedableRng;
 use rand_pcg::Pcg32;
-use structopt::StructOpt;
+use structopt::{clap::arg_enum, StructOpt};
 
 use neutopia::{self, object, object::parse_object_table, verify::Region, Neutopia};
 
 mod patches;
+
+arg_enum! {
+    #[derive(Debug)]
+    enum RandoType {
+        Local,
+        Global,
+        None,
+    }
+}
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
@@ -27,8 +36,8 @@ struct Opt {
     #[structopt(long)]
     seed: Option<String>,
 
-    #[structopt(long)]
-    global: bool,
+    #[structopt(long = "type", possible_values = &RandoType::variants(), case_insensitive = true, default_value = "local")]
+    ty: RandoType,
 }
 
 #[derive(Clone, Debug)]
@@ -400,11 +409,12 @@ fn main() -> Result<(), Error> {
 
     apply_patches(&mut buffer)?;
 
-    let new_data = if opt.global {
-        global_rando(&mut rng, &buffer)?
-    } else {
-        crypt_rando(&mut rng, &buffer)?
+    let new_data = match opt.ty {
+        RandoType::Local => crypt_rando(&mut rng, &buffer)?,
+        RandoType::Global => global_rando(&mut rng, &buffer)?,
+        _ => buffer,
     };
+
     let filename = &opt
         .out
         .unwrap_or_else(|| PathBuf::from(format!("neutopia-randomizer-{:#}.pce", radix_36(seed))));

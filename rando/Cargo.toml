@@ -17,7 +17,6 @@ radix_fmt = "1.0.0"
 rand = "0.7.3"
 rand_core = "0.5.1"
 rand_pcg = "0.2.1"
-structopt = "0.3.15"
 
 [build-dependencies]
 asm_build = { path = "../build/asm_build" }

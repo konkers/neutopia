@@ -1,42 +1,43 @@
-use std::fs::File;
 use std::io::{prelude::*, Cursor, SeekFrom};
-use std::path::PathBuf;
+use std::str::FromStr;
 
 use failure::{format_err, Error};
 use ips::Patch;
+use neutopia::{self, rom, verify::Region, Neutopia};
 use radix_fmt::radix_36;
 use rand::{self, prelude::*};
 use rand_core::SeedableRng;
 use rand_pcg::Pcg32;
-use structopt::{clap::arg_enum, StructOpt};
-
-use neutopia::{self, rom, verify::Region, Neutopia};
 
 mod patches;
 
-arg_enum! {
-    #[derive(Debug)]
-    enum RandoType {
-        Local,
-        Global,
-        None,
+#[derive(Debug)]
+pub enum RandoType {
+    Local,
+    Global,
+    None,
+}
+
+impl FromStr for RandoType {
+    type Err = Error;
+    fn from_str(day: &str) -> Result<Self, Self::Err> {
+        match day {
+            "local" => Ok(RandoType::Local),
+            "global" => Ok(RandoType::Global),
+            "none" => Ok(RandoType::None),
+            _ => Err(format_err!("Could not parse rando type")),
+        }
     }
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "basic")]
-struct Opt {
-    #[structopt(long, parse(from_os_str), default_value = "Neutopia (USA).pce")]
-    rom: PathBuf,
+pub struct Config {
+    pub ty: RandoType,
+    pub seed: Option<String>,
+}
 
-    #[structopt(long, parse(from_os_str))]
-    out: Option<PathBuf>,
-
-    #[structopt(long)]
-    seed: Option<String>,
-
-    #[structopt(long = "type", possible_values = &RandoType::variants(), case_insensitive = true, default_value = "local")]
-    ty: RandoType,
+pub struct RandomizedGame {
+    pub seed: String,
+    pub data: Vec<u8>,
 }
 
 // Shuffle all items within each crypt.  Does not touch overworld items.
@@ -136,11 +137,9 @@ fn apply_patches(data: &mut [u8]) -> Result<(), Error> {
     Ok(())
 }
 
-fn main() -> Result<(), Error> {
-    let opt = Opt::from_args();
-
+pub fn randomize(config: &Config, data: &[u8]) -> Result<RandomizedGame, Error> {
     // Let the user specify a seed in base36.  Otherwise randomly generate one.
-    let seed = match &opt.seed {
+    let seed = match &config.seed {
         Some(s) => u64::from_str_radix(s, 36)
             .map_err(|e| format_err!("Seed name must be a valid base36 64 bit number: {}", e))?,
         None => rand::thread_rng().gen(),
@@ -148,27 +147,18 @@ fn main() -> Result<(), Error> {
 
     let mut rng = Pcg32::seed_from_u64(seed);
 
-    let mut f = File::open(&opt.rom)?;
-    let mut buffer = Vec::new();
-    // read the whole file
-    f.read_to_end(&mut buffer)?;
-
-    let mut buffer = verify_rom(buffer)?;
+    let mut buffer = verify_rom(data.to_vec())?;
 
     apply_patches(&mut buffer)?;
 
-    let new_data = match opt.ty {
+    let new_data = match config.ty {
         RandoType::Local => crypt_rando(&mut rng, &buffer)?,
         RandoType::Global => global_rando(&mut rng, &buffer)?,
         _ => buffer,
     };
 
-    let filename = &opt
-        .out
-        .unwrap_or_else(|| PathBuf::from(format!("neutopia-randomizer-{:#}.pce", radix_36(seed))));
-    let mut f = File::create(filename)?;
-    f.write_all(&new_data)?;
-
-    println!("wrote {}", filename.display());
-    Ok(())
+    Ok(RandomizedGame {
+        seed: format!("{:#}", radix_36(seed)),
+        data: new_data,
+    })
 }

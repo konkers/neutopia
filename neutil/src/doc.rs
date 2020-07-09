@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use failure::Error;
 use structopt::StructOpt;
 
-use neutopia::{object::parse_object_table, NeutopiaRom};
+use neutopia::rom::{object::parse_object_table, NeutopiaRom};
 
 #[derive(StructOpt, Debug)]
 pub(crate) struct DocOpt {

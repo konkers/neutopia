@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use failure::Error;
 use structopt::StructOpt;
 
-use neutopia::{object::parse_object_table, Neutopia};
+use neutopia::{object::parse_object_table, NeutopiaRom};
 
 #[derive(StructOpt, Debug)]
 pub(crate) struct DocOpt {
@@ -28,7 +28,7 @@ fn write_byte_array(f: &mut File, data: &[u8]) -> Result<(), Error> {
     Ok(())
 }
 
-fn write_area_markdown(opt: &DocOpt, n: &Neutopia, area_index: usize) -> Result<(), Error> {
+fn write_area_markdown(opt: &DocOpt, n: &NeutopiaRom, area_index: usize) -> Result<(), Error> {
     let mut path: PathBuf = opt.outdir.clone();
     path.push(format!("area_{:02x}.md", area_index));
     let mut f = File::create(path)?;
@@ -148,7 +148,7 @@ pub(crate) fn command(opt: &DocOpt) -> Result<(), Error> {
     // read the whole file
     f.read_to_end(&mut buffer)?;
 
-    let n = Neutopia::new(&buffer)?;
+    let n = NeutopiaRom::new(&buffer)?;
 
     for area_index in 0..n.area_pointers.len() {
         write_area_markdown(opt, &n, area_index)?;

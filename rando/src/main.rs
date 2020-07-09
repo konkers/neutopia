@@ -11,7 +11,12 @@ use rand_core::SeedableRng;
 use rand_pcg::Pcg32;
 use structopt::{clap::arg_enum, StructOpt};
 
-use neutopia::{self, object, object::parse_object_table, verify::Region, NeutopiaRom};
+use neutopia::{
+    self, rom,
+    rom::{object, object::parse_object_table},
+    verify::Region,
+    NeutopiaRom,
+};
 
 mod patches;
 
@@ -50,16 +55,17 @@ struct Room {
 #[derive(Clone, Debug)]
 struct Area {
     pub rooms: Vec<Room>,
-    pub chest_table: Vec<neutopia::Chest>,
+    pub chest_table: Vec<rom::Chest>,
 }
 
 #[derive(Clone, Debug)]
 struct Chest {
-    info: neutopia::Chest,
+    info: rom::Chest,
     area: u8,
     room: u8,
     id: usize,
 }
+
 #[derive(Clone, Debug)]
 struct Conditional {
     data: Vec<object::TableEntry>,
@@ -67,7 +73,7 @@ struct Conditional {
 
 struct Randomizer {
     pub areas: Vec<Area>,
-    pub conditionals: HashMap<neutopia::Chest, Conditional>,
+    pub conditionals: HashMap<rom::Chest, Conditional>,
     pub rom_data: Vec<u8>,
     n: NeutopiaRom,
 }
@@ -305,7 +311,7 @@ fn crypt_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
         });
 
         // Shuffle the chests.
-        let mut randomized_chests: Vec<neutopia::Chest> =
+        let mut randomized_chests: Vec<rom::Chest> =
             chests.iter().map(|chest| chest.info.clone()).collect();
         randomized_chests.shuffle(rng);
 
@@ -333,7 +339,7 @@ fn global_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
     });
 
     // Shuffle the chests.
-    let mut randomized_chests: Vec<neutopia::Chest> =
+    let mut randomized_chests: Vec<rom::Chest> =
         chests.iter().map(|chest| chest.info.clone()).collect();
     randomized_chests.shuffle(rng);
 

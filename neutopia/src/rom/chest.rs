@@ -25,12 +25,12 @@ impl Chest {
     #[allow(clippy::useless_format)]
     pub fn get_item_name(&self) -> String {
         match self.item_id {
-            0 => format!("{} bombs", self.arg),
+            0 => format!("Bombs x{}", self.arg),
             1 => format!("Medicine"),
-            2 => format!("Firewand"),
+            2 => format!("Fire Wand"),
             3 => format!("Sky Bell"),
             4 => format!("Wings"),
-            5 => format!("Moonbeam Moss level {}", self.arg),
+            5 => format!("Moonbeam Moss"),
             6 => format!("Magic Ring"),
             7 => format!("Placeholder"),
             8 => match self.arg {

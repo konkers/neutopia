@@ -261,5 +261,27 @@ impl Neutopia {
     }
 }
 
+pub fn area_name(area: u8) -> &'static str {
+    match area {
+        0x0 => "Land Sphere",
+        0x1 => "Subterranean Sphere",
+        0x2 => "Sea Sphere",
+        0x3 => "Sky Sphere",
+        0x4 => "Crypt 1",
+        0x5 => "Crypt 2",
+        0x6 => "Crypt 3",
+        0x7 => "Crypt 4",
+        0x8 => "Crypt 5",
+        0x9 => "Crypt 6",
+        0xa => "Crypt 7",
+        0xb => "Crypt 8",
+        0xc => "Land Sphere Rooms",
+        0xd => "Subterranean Sphere Rooms",
+        0xe => "Sea Sphere Rooms",
+        0xf => "Sky Sphere Rooms",
+        _ => "Unknown",
+    }
+}
+
 #[cfg(test)]
 mod tests {}

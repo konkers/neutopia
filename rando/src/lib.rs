@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::{prelude::*, Cursor, SeekFrom};
 use std::str::FromStr;
 
@@ -34,6 +34,7 @@ impl FromStr for RandoType {
     }
 }
 
+#[derive(Debug)]
 pub struct Config {
     pub ty: RandoType,
     pub seed: Option<String>,
@@ -44,7 +45,7 @@ pub struct RandomizedGame {
     pub data: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "kebab-case")]
 pub enum Gate {
     RainbowDrop,
@@ -53,7 +54,7 @@ pub enum Gate {
     Bell,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Check {
     pub name: String,
     pub area: u8,
@@ -63,11 +64,180 @@ pub struct Check {
     pub gates: Vec<Gate>,
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct LocationId {
+impl Check {
+    pub fn loc(&self) -> LocationId {
+        LocationId {
+            area: self.area,
+            room: self.room,
+            index: self.index,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct LocationId {
     pub area: u8,
     pub room: u8,
     pub index: u8,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct Item {
+    info: rom::Chest,
+    area_lock: Option<u8>,
+}
+
+struct State {
+    // We're using BTree data structures to give us deterministic traversal
+    // ordering.
+    unassigned_checks: BTreeMap<LocationId, Check>,
+    unplaced_items: BTreeSet<Item>,
+    cleared_gates: BTreeSet<Gate>,
+
+    assigned_chests: Vec<neutopia::Chest>,
+
+    n: Neutopia,
+}
+
+impl State {
+    pub fn new(n: Neutopia) -> Result<Self, Error> {
+        let mut unplaced_items = BTreeSet::new();
+
+        // Filter out end game area and medallions
+        let chests = n.filter_chests(|chest| (chest.area < 0x10) && (chest.info.item_id < 0x12));
+
+        for chest in chests {
+            // Lock crystal balls and crypt keys to their area
+            let area_lock = match chest.info.item_id {
+                0x10 | 0x11 => Some(chest.area),
+                _ => None,
+            };
+
+            unplaced_items.insert(Item {
+                info: chest.info,
+                area_lock,
+            });
+        }
+
+        Ok(Self {
+            unassigned_checks: get_checks()?,
+            unplaced_items,
+            cleared_gates: BTreeSet::new(),
+            assigned_chests: Vec::new(),
+            n,
+        })
+    }
+
+    fn is_complete(&self) -> bool {
+        assert_eq!(self.unassigned_checks.len(), self.unplaced_items.len());
+        self.unassigned_checks.is_empty()
+    }
+
+    fn gate_for_item(item: &Item) -> Option<Gate> {
+        match item.info.item_id {
+            0x02 => Some(Gate::FireWand),
+            0x03 => Some(Gate::Bell),
+            0x0b => Some(Gate::FalconShoes),
+            0x0c => Some(Gate::RainbowDrop),
+            _ => None,
+        }
+    }
+
+    pub fn place_item(&mut self, item: Item, area: u8, room: u8, index: u8) -> Result<(), Error> {
+        self.place_item_by_loc(item, &LocationId { area, room, index })
+    }
+
+    pub fn place_item_by_loc(&mut self, item: Item, loc: &LocationId) -> Result<(), Error> {
+        if let Some(area) = &item.area_lock {
+            if *area != loc.area {
+                return Err(format_err!(
+                    "attempting to place area locked item {:?} in area {}",
+                    &item,
+                    loc.area
+                ));
+            }
+        }
+
+        let check = self.unassigned_checks.remove(loc).ok_or(format_err!(
+            "can't place item at unknown location {:?}",
+            loc
+        ))?;
+        if !self.unplaced_items.remove(&item) {
+            return Err(format_err!("can't place unknown item {:?}", item));
+        }
+
+        if let Some(gate) = Self::gate_for_item(&item) {
+            self.cleared_gates.insert(gate);
+        }
+
+        let chest = neutopia::Chest {
+            info: item.info,
+            area: check.area,
+            room: check.room,
+            index: check.index,
+        };
+
+        self.assigned_chests.push(chest);
+
+        assert_eq!(self.unassigned_checks.len(), self.unplaced_items.len());
+
+        Ok(())
+    }
+
+    pub fn filter_items(&self, filter: impl Fn(&Item) -> bool) -> Vec<Item> {
+        let mut items = Vec::new();
+        for item in &self.unplaced_items {
+            if filter(item) {
+                items.push(item.clone());
+            }
+        }
+
+        items
+    }
+
+    pub fn get_item_by_id(&self, id: u8) -> Result<Item, Error> {
+        let items = self.filter_items(|item| item.info.item_id == id);
+        if items.len() > 1 {
+            Err(format_err!("Found {} items with id {:02}", items.len(), id))
+        } else if items.is_empty() {
+            Err(format_err!("Found no items with id {:02}", id))
+        } else {
+            Ok(items[0].clone())
+        }
+    }
+
+    pub fn filter_checks(&self, filter: impl Fn(&Check) -> bool) -> Vec<Check> {
+        let mut checks = Vec::new();
+        'check: for check in self.unassigned_checks.values() {
+            // Filter out gated checks first.
+            for gate in &check.gates {
+                if !self.cleared_gates.contains(gate) {
+                    continue 'check;
+                }
+            }
+            if filter(check) {
+                checks.push(check.clone());
+            }
+        }
+
+        checks
+    }
+
+    pub fn filter_checks_gateless(&self, filter: impl Fn(&Check) -> bool) -> Vec<Check> {
+        let mut checks = Vec::new();
+        for check in self.unassigned_checks.values() {
+            if filter(check) {
+                checks.push(check.clone());
+            }
+        }
+
+        checks
+    }
+
+    pub fn finalize(mut self) -> Result<Neutopia, Error> {
+        self.n.update_chests(&self.assigned_chests)?;
+        Ok(self.n)
+    }
 }
 
 fn get_checks() -> Result<BTreeMap<LocationId, Check>, Error> {
@@ -81,7 +251,13 @@ fn get_checks() -> Result<BTreeMap<LocationId, Check>, Error> {
             room: check.room,
             index: check.index,
         };
-        assert!(!checks.contains_key(&loc));
+        if checks.contains_key(&loc) {
+            return Err(format_err!(
+                "duplicate location {:?} for check {}",
+                &loc,
+                &check.name
+            ));
+        }
         checks.insert(loc, check);
     }
 
@@ -120,40 +296,47 @@ fn crypt_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
 // Shuffle all items across crypts and overworld.  Does not contain logic
 // to make sure seed is completable.
 fn global_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
-    let mut n = Neutopia::new(rom_data)?;
+    let n = Neutopia::new(rom_data)?;
 
-    let mut checks = get_checks()?;
+    let mut state = State::new(n)?;
+    let book = state.get_item_by_id(0xd)?;
+    let moss = state.get_item_by_id(0x5)?;
 
-    let chests = n.filter_chests(|chest| {
-        // Ignore boss area
-        (chest.area < 0x10)
-                // Chest does not contain medallion, crystal ball, or key
-                && (chest.info.item_id < 0x10) 
-                // nor is it the book or moss as we want to place those manually.
-                && (chest.info.item_id != 0x05) && (chest.info.item_id != 0x0d)
-    });
+    state.place_item(book, 0xc, 0x9, 0x0)?;
+    state.place_item(moss, 0xc, 0x11, 0x1)?;
 
-    let book = n.filter_chests(|chest| {
-        (chest.area < 0x10) && (chest.info.item_id == 0x0d) 
-    }).iter().next();
+    // Place area locked items first.
+    for area in 0x4..=0xf {
+        let items = state.filter_items(|item| match item.area_lock {
+            Some(a) => a == area,
+            None => false,
+        });
 
-    let moss = n.filter_chests(|chest| {
-        (chest.area < 0x10) && (chest.info.item_id == 0x05) 
-    }).iter().next();
-
-    let mut items: Vec<rom::Chest> = chests.iter().map(|c| c.info.clone()).collect();
-
-    // Shuffle the chests.
-    let mut randomized_chests: Vec<rom::Chest> =
-        chests.iter().map(|chest| chest.info.clone()).collect();
-    randomized_chests.shuffle(rng);
-
-    // Update the chests' info
-    for (i, chest) in chests.iter_mut().enumerate() {
-        chest.info = randomized_chests[i].clone();
+        for item in items {
+            // Query checks each iteration so that we pick up changes we make.
+            // Also, ignore key item gating as we know the area locked items
+            // are not affected by gating.
+            let checks = state.filter_checks_gateless(|check| check.area == area);
+            let check = checks.choose(rng).unwrap();
+            state.place_item_by_loc(item, &check.loc())?;
+        }
     }
 
-    n.update_chests(&chests)?;
+    //
+    // Now assign the rest of the items considering gating.
+    //
+
+    // Get all the items and shuffle them.
+    let mut items = state.filter_items(|_| true);
+    items.shuffle(rng);
+    while !state.is_complete() {
+        // Get all open checks and chose one
+        let checks = state.filter_checks(|_| true);
+        let check = checks.choose(rng).unwrap();
+        let item = items.pop().unwrap();
+        state.place_item_by_loc(item, &check.loc())?;
+    }
+    let n = state.finalize()?;
     n.write()
 }
 

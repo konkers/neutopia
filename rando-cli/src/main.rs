@@ -35,6 +35,7 @@ fn main() -> Result<(), Error> {
         ty: opt.ty,
     };
 
+    println!("{:?}", &config);
     let r = rando::randomize(&config, &buffer)?;
 
     let filename = &opt

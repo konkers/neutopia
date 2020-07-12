@@ -54,6 +54,7 @@ impl NeutopiaRom {
             let mut room_data_intervals: IntervalStore<usize> = IntervalStore::new();
             room_data_intervals.add(*area_ptr as usize, *area_ptr as usize + 0x40 * 3);
             let mut area_info = HashMap::new();
+            println!("{:02x} {:05x}", area_idx, area_ptr);
             for idx in 0..0x40 {
                 let offset = (*area_ptr as usize) + (idx as usize) * 3;
                 let offset = util::pointer_to_rom_offset(&data[offset..]).map_err(|e| {

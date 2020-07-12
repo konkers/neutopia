@@ -31,7 +31,6 @@ pub struct Chest {
     pub area: u8,
     pub room: u8,
     pub index: u8,
-    pub id: usize,
 }
 
 #[derive(Clone, Debug)]
@@ -123,7 +122,6 @@ impl Neutopia {
                             area: area_idx as u8,
                             room: room_idx as u8,
                             index: chest_index,
-                            id: id as usize,
                         };
                         chest_index += 1;
                         if filter(&chest) {
@@ -137,12 +135,31 @@ impl Neutopia {
         chests
     }
 
+    fn get_table_id_for_chest(&self, chest: &Chest) -> Result<usize, Error> {
+        let area = &self.areas[chest.area as usize];
+        let room = &area.rooms[chest.room as usize];
+
+        let mut chest_index = 0;
+        for obj_entry in &room.objects {
+            if let Some(id) = obj_entry.chest_id() {
+                if chest_index == chest.index {
+                    return Ok(id as usize);
+                }
+                chest_index += 1;
+            }
+        }
+
+        Err(format_err!("can't find id for chest {:?}", chest))
+    }
+
     pub fn update_chests(&mut self, chests: &[Chest]) -> Result<(), Error> {
         for chest in chests {
+            let id = self.get_table_id_for_chest(chest)?;
+            println!("{:x} {:#x?}", id, chest);
             let entry = self.areas[chest.area as usize]
                 .chest_table
-                .get_mut(chest.id)
-                .ok_or_else(|| format_err!("incoherent chest id {:02x}", chest.id))?;
+                .get_mut(id as usize)
+                .ok_or_else(|| format_err!("incoherent chest id {:02x}", id))?;
 
             *entry = chest.info.clone();
         }
@@ -232,8 +249,7 @@ impl Neutopia {
     pub fn write(&self) -> Result<Vec<u8>, Error> {
         let mut rom_writer = Cursor::new(self.rom_data.clone());
 
-        // For now we're only doing crypts
-        let area_range = 4..=0xb;
+        let area_range = 4..=0xf;
 
         // First patch chest tables
         for area_idx in area_range.clone() {
@@ -257,9 +273,19 @@ impl Neutopia {
 
         // Beginning or area data starts where Area 4's data starts.
         let mut cur_offset = self.n.area_pointers[4];
+        let mut offset_c = None;
         for area_idx in area_range {
+            if area_idx == 0xc {
+                offset_c = Some(cur_offset);
+            }
             rom_writer.seek(SeekFrom::Start(cur_offset as u64))?;
             cur_offset = self.write_area(area_idx, &mut rom_writer)?
+        }
+
+        // Lastly, fixup area 0x10's pointers to match 0xc's
+        if let Some(offset) = offset_c {
+            rom_writer.seek(SeekFrom::Start(rommap::AREA_TABLE as u64 + 0x10 * 3))?;
+            rom_writer.write_all(&util::rom_offset_to_pointer(offset as u32))?;
         }
 
         Ok(rom_writer.into_inner())

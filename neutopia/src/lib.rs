@@ -30,7 +30,7 @@ pub struct Chest {
     pub info: rom::Chest,
     pub area: u8,
     pub room: u8,
-    pub id: usize,
+    pub index: u8,
 }
 
 #[derive(Clone, Debug)]
@@ -114,14 +114,16 @@ impl Neutopia {
 
         for (area_idx, area) in self.areas.iter().enumerate() {
             for (room_idx, room) in area.rooms.iter().enumerate() {
+                let mut chest_index = 0;
                 for entry in &room.objects {
                     if let Some(id) = entry.chest_id() {
                         let chest = Chest {
                             info: area.chest_table[id as usize].clone(),
                             area: area_idx as u8,
                             room: room_idx as u8,
-                            id: id as usize,
+                            index: chest_index,
                         };
+                        chest_index += 1;
                         if filter(&chest) {
                             chests.push(chest);
                         }
@@ -133,12 +135,30 @@ impl Neutopia {
         chests
     }
 
+    fn get_table_id_for_chest(&self, chest: &Chest) -> Result<usize, Error> {
+        let area = &self.areas[chest.area as usize];
+        let room = &area.rooms[chest.room as usize];
+
+        let mut chest_index = 0;
+        for obj_entry in &room.objects {
+            if let Some(id) = obj_entry.chest_id() {
+                if chest_index == chest.index {
+                    return Ok(id as usize);
+                }
+                chest_index += 1;
+            }
+        }
+
+        Err(format_err!("can't find id for chest {:?}", chest))
+    }
+
     pub fn update_chests(&mut self, chests: &[Chest]) -> Result<(), Error> {
         for chest in chests {
+            let id = self.get_table_id_for_chest(chest)?;
             let entry = self.areas[chest.area as usize]
                 .chest_table
-                .get_mut(chest.id)
-                .ok_or_else(|| format_err!("incoherent chest id {:02x}", chest.id))?;
+                .get_mut(id as usize)
+                .ok_or_else(|| format_err!("incoherent chest id {:02x}", id))?;
 
             *entry = chest.info.clone();
         }

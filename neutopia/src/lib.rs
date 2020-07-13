@@ -30,6 +30,7 @@ pub struct Chest {
     pub info: rom::Chest,
     pub area: u8,
     pub room: u8,
+    pub index: u8,
     pub id: usize,
 }
 
@@ -114,14 +115,17 @@ impl Neutopia {
 
         for (area_idx, area) in self.areas.iter().enumerate() {
             for (room_idx, room) in area.rooms.iter().enumerate() {
+                let mut chest_index = 0;
                 for entry in &room.objects {
                     if let Some(id) = entry.chest_id() {
                         let chest = Chest {
                             info: area.chest_table[id as usize].clone(),
                             area: area_idx as u8,
                             room: room_idx as u8,
+                            index: chest_index,
                             id: id as usize,
                         };
+                        chest_index += 1;
                         if filter(&chest) {
                             chests.push(chest);
                         }

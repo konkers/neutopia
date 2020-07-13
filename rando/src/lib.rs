@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::io::{prelude::*, Cursor, SeekFrom};
 use std::str::FromStr;
 
@@ -11,6 +12,8 @@ use rand_pcg::Pcg32;
 use serde::{Deserialize, Serialize};
 
 mod patches;
+
+static CHECKS_DATA: &[u8] = include_bytes!("checks.json");
 
 #[derive(Debug)]
 pub enum RandoType {
@@ -55,7 +58,34 @@ pub struct Check {
     pub name: String,
     pub area: u8,
     pub room: u8,
+    #[serde(default)]
+    pub index: u8,
     pub gates: Vec<Gate>,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct LocationId {
+    pub area: u8,
+    pub room: u8,
+    pub index: u8,
+}
+
+fn get_checks() -> Result<BTreeMap<LocationId, Check>, Error> {
+    let checks_vec: Vec<Check> = serde_json::from_slice(&CHECKS_DATA)
+        .map_err(|e| format_err!("failed to parse checks JSON: {}", e))?;
+
+    let mut checks = BTreeMap::new();
+    for check in checks_vec {
+        let loc = LocationId {
+            area: check.area,
+            room: check.room,
+            index: check.index,
+        };
+        assert!(!checks.contains_key(&loc));
+        checks.insert(loc, check);
+    }
+
+    Ok(checks)
 }
 
 // Shuffle all items within each crypt.  Does not touch overworld items.
@@ -92,12 +122,26 @@ fn crypt_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
 fn global_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
     let mut n = Neutopia::new(rom_data)?;
 
-    let mut chests = n.filter_chests(|chest| {
-        // Chest is in current area
+    let mut checks = get_checks()?;
+
+    let chests = n.filter_chests(|chest| {
+        // Ignore boss area
         (chest.area < 0x10)
                 // Chest does not contain medallion, crystal ball, or key
-                && (chest.info.item_id < 0x10 || chest.info.item_id >= (0x12 + 8))
+                && (chest.info.item_id < 0x10) 
+                // nor is it the book or moss as we want to place those manually.
+                && (chest.info.item_id != 0x05) && (chest.info.item_id != 0x0d)
     });
+
+    let book = n.filter_chests(|chest| {
+        (chest.area < 0x10) && (chest.info.item_id == 0x0d) 
+    }).iter().next();
+
+    let moss = n.filter_chests(|chest| {
+        (chest.area < 0x10) && (chest.info.item_id == 0x05) 
+    }).iter().next();
+
+    let mut items: Vec<rom::Chest> = chests.iter().map(|c| c.info.clone()).collect();
 
     // Shuffle the chests.
     let mut randomized_chests: Vec<rom::Chest> =

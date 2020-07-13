@@ -3,6 +3,7 @@ use std::io::{prelude::*, Cursor, SeekFrom};
 
 use failure::{format_err, Error};
 
+pub mod interval;
 pub mod rom;
 pub mod rommap;
 pub mod util;

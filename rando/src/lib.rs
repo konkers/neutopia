@@ -8,9 +8,12 @@ use radix_fmt::radix_36;
 use rand::{self, prelude::*};
 use rand_core::SeedableRng;
 use rand_pcg::Pcg32;
-use serde::{Deserialize, Serialize};
 
 mod patches;
+mod state;
+
+pub use state::Check;
+use state::State;
 
 #[derive(Debug)]
 pub enum RandoType {
@@ -31,6 +34,7 @@ impl FromStr for RandoType {
     }
 }
 
+#[derive(Debug)]
 pub struct Config {
     pub ty: RandoType,
     pub seed: Option<String>,
@@ -39,23 +43,6 @@ pub struct Config {
 pub struct RandomizedGame {
     pub seed: String,
     pub data: Vec<u8>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "kebab-case")]
-pub enum Gate {
-    RainbowDrop,
-    FalconShoes,
-    FireWand,
-    Bell,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Check {
-    pub name: String,
-    pub area: u8,
-    pub room: u8,
-    pub gates: Vec<Gate>,
 }
 
 // Shuffle all items within each crypt.  Does not touch overworld items.
@@ -90,26 +77,63 @@ fn crypt_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
 // Shuffle all items across crypts and overworld.  Does not contain logic
 // to make sure seed is completable.
 fn global_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
-    let mut n = Neutopia::new(rom_data)?;
+    let n = Neutopia::new(rom_data)?;
 
-    let mut chests = n.filter_chests(|chest| {
-        // Chest is in current area
-        (chest.area < 0x10)
-                // Chest does not contain medallion, crystal ball, or key
-                && (chest.info.item_id < 0x10 || chest.info.item_id >= (0x12 + 8))
-    });
+    let mut state = State::new(n)?;
+    let book = state.get_item_by_id(0xd)?;
+    let moss = state.get_item_by_id(0x5)?;
 
-    // Shuffle the chests.
-    let mut randomized_chests: Vec<rom::Chest> =
-        chests.iter().map(|chest| chest.info.clone()).collect();
-    randomized_chests.shuffle(rng);
+    state.place_item(book, 0xc, 0x9, 0x0)?;
+    state.place_item(moss, 0xc, 0x11, 0x1)?;
 
-    // Update the chests' info
-    for (i, chest) in chests.iter_mut().enumerate() {
-        chest.info = randomized_chests[i].clone();
+    // Place area locked items first.
+    for area in 0x4..=0xf {
+        let items = state.filter_items(|item| match item.area_lock {
+            Some(a) => a == area,
+            None => false,
+        });
+
+        for item in items {
+            // Query checks each iteration so that we pick up changes we make.
+            // Also, ignore key item gating as we know the area locked items
+            // are not affected by gating.
+            let checks = state.filter_checks_gateless(|check| check.area == area);
+            let check = checks.choose(rng).unwrap();
+            state.place_item_by_loc(item, &check.loc())?;
+        }
     }
 
-    n.update_chests(&chests)?;
+    // Next place the fire wand, bell, shoes, and drop in logic
+    let mut items = state.filter_items(|item| {
+        item.info.item_id == 0x2
+            || item.info.item_id == 0x3
+            || item.info.item_id == 0xb
+            || item.info.item_id == 0xc
+    });
+    items.shuffle(rng);
+    while !items.is_empty() {
+        // Get all open checks and chose one
+        let checks = state.filter_checks(|_| true);
+        let check = checks.choose(rng).unwrap();
+        let item = items.pop().unwrap();
+        state.place_item_by_loc(item, &check.loc())?;
+    }
+
+    //
+    // Now assign the rest of the items considering gating.
+    //
+
+    // Get all the items and shuffle them.
+    let mut items = state.filter_items(|_| true);
+    items.shuffle(rng);
+    while !state.is_complete() {
+        // Get all open checks and chose one
+        let checks = state.filter_checks(|_| true);
+        let check = checks.choose(rng).unwrap();
+        let item = items.pop().unwrap();
+        state.place_item_by_loc(item, &check.loc())?;
+    }
+    let n = state.finalize()?;
     n.write()
 }
 

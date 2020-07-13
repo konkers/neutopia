@@ -43,6 +43,7 @@ pub(crate) fn command(opt: &ChecksOpt) -> Result<(), Error> {
             name,
             area: chest.area,
             room: chest.room,
+            index: chest.index,
             gates: Vec::new(),
         };
         checks.push(check);

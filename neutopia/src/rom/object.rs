@@ -37,7 +37,7 @@ pub enum TableEntry {
     BossDoor(u8),
     Unknown0b([u8; 3]),
     Burnable(ObjectInfo),
-    HiddenRoom([u8; 2]),
+    HiddenRoom([u8; 3]),
     FalconBootsNeeded,
     Npc([u8; 5]),
     OuchRope(ObjectInfo),
@@ -270,8 +270,8 @@ gen_object_type!(parse_burnable, write_burnable, 0x0c, Burnable);
 
 fn parse_hidden_room(i: &[u8]) -> IResult<&[u8], TableEntry> {
     let (i, _) = tag([0x0d])(i)?;
-    let (i, data) = take(2usize)(i)?;
-    Ok((i, TableEntry::HiddenRoom([data[0], data[1]])))
+    let (i, data) = take(3usize)(i)?;
+    Ok((i, TableEntry::HiddenRoom([data[0], data[1], data[2]])))
 }
 gen_data_write!(write_hidden_room, 0x0d, HiddenRoom);
 
@@ -476,7 +476,10 @@ mod tests {
             }),
         );
 
-        run_parse_test(&[0x0d, 0x14, 0x14], TableEntry::HiddenRoom([0x14, 0x14]));
+        run_parse_test(
+            &[0x0d, 0x14, 0x14, 0x33],
+            TableEntry::HiddenRoom([0x14, 0x14, 0x33]),
+        );
 
         run_parse_test(&[0x81], TableEntry::FalconBootsNeeded);
 

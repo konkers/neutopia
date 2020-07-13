@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use failure::{format_err, Error};
 
-use super::{rommap, util};
+use super::{interval::IntervalStore, rommap, util};
 
 mod chest;
 pub mod object;
@@ -30,6 +30,8 @@ pub struct NeutopiaRom {
     pub room_order_tables: HashMap<u32, Vec<u8>>,
     pub room_info_tables: Vec<HashMap<u8, Room>>,
     pub chest_tables: HashMap<u32, Vec<Chest>>,
+
+    pub room_info_intervals: HashMap<u8, IntervalStore<usize>>,
 }
 
 impl NeutopiaRom {
@@ -46,8 +48,11 @@ impl NeutopiaRom {
         let mut room_info_tables = Vec::new();
         let mut room_order_tables = HashMap::new();
         let mut chest_tables = HashMap::new();
+        let mut room_info_intervals = HashMap::new();
 
         for (area_idx, area_ptr) in area_pointers.iter().enumerate() {
+            let mut room_data_intervals: IntervalStore<usize> = IntervalStore::new();
+            room_data_intervals.add(*area_ptr as usize, *area_ptr as usize + 0x40 * 3);
             let mut area_info = HashMap::new();
             for idx in 0..0x40 {
                 let offset = (*area_ptr as usize) + (idx as usize) * 3;
@@ -68,32 +73,40 @@ impl NeutopiaRom {
                         e
                     )
                 })?;
-                let warp_table_pointer = ptrs[0];
-                let enemy_table_pointer = ptrs[1];
+                let warp_table_pointer = ptrs[0] as usize;
+                let enemy_table_pointer = ptrs[1] as usize;
                 let object_table_pointer = ptrs[2] as usize;
 
+                room_data_intervals.add(offset, offset + 3 * 3);
+
+                let warp_table = Vec::from(&data[warp_table_pointer..enemy_table_pointer]);
+                let enemy_table = util::read_object_table(&data[enemy_table_pointer..]);
                 // Todo, clean this up once everything parses.
-                let object_table = match object::object_table_len(&data[object_table_pointer..]) {
-                    Ok(len) => data[object_table_pointer..object_table_pointer + len].to_vec(),
-                    Err(_) => util::read_object_table(&data[object_table_pointer as usize..]),
-                };
+                let len = object::object_table_len(&data[object_table_pointer..])?;
+                let object_table = data[object_table_pointer..object_table_pointer + len].to_vec();
+
+                room_data_intervals.add(warp_table_pointer, warp_table_pointer + warp_table.len());
+                room_data_intervals.add(
+                    enemy_table_pointer,
+                    enemy_table_pointer + enemy_table.len() + 1,
+                );
+                room_data_intervals.add(object_table_pointer, object_table_pointer + len + 1);
 
                 area_info.insert(
                     idx as u8,
                     Room {
                         base_addr: offset as u32,
-                        warp_table_pointer,
-                        enemy_table_pointer,
+                        warp_table_pointer: warp_table_pointer as u32,
+                        enemy_table_pointer: enemy_table_pointer as u32,
                         object_table_pointer: object_table_pointer as u32,
-                        warp_table: Vec::from(
-                            &data[(warp_table_pointer as usize)..(enemy_table_pointer as usize)],
-                        ),
-                        enemy_table: util::read_object_table(&data[enemy_table_pointer as usize..]),
+                        warp_table,
+                        enemy_table,
                         object_table,
                     },
                 );
             }
             room_info_tables.push(area_info);
+            room_info_intervals.insert(area_idx as u8, room_data_intervals);
         }
 
         for room_order_ptr in &room_order_pointers {
@@ -115,6 +128,7 @@ impl NeutopiaRom {
             room_order_tables,
             room_info_tables,
             chest_tables,
+            room_info_intervals,
         })
     }
 }

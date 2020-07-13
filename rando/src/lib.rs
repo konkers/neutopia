@@ -322,6 +322,22 @@ fn global_rando(rng: &mut impl Rng, rom_data: &[u8]) -> Result<Vec<u8>, Error> {
         }
     }
 
+    // Next place the fire wand, bell, shoes, and drop in logic
+    let mut items = state.filter_items(|item| {
+        item.info.item_id == 0x2
+            || item.info.item_id == 0x3
+            || item.info.item_id == 0xb
+            || item.info.item_id == 0xc
+    });
+    items.shuffle(rng);
+    while !items.is_empty() {
+        // Get all open checks and chose one
+        let checks = state.filter_checks(|_| true);
+        let check = checks.choose(rng).unwrap();
+        let item = items.pop().unwrap();
+        state.place_item_by_loc(item, &check.loc())?;
+    }
+
     //
     // Now assign the rest of the items considering gating.
     //

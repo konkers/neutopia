@@ -1,0 +1,389 @@
+[
+  {
+    "name": "Crypt 1 - Bombs x4",
+    "area": 4,
+    "room": 18,
+    "gates": []
+  },
+  {
+    "name": "Crypt 1 - Bronze Armor",
+    "area": 4,
+    "room": 27,
+    "gates": []
+  },
+  {
+    "name": "Crypt 1 - Crystal Ball",
+    "area": 4,
+    "room": 35,
+    "gates": []
+  },
+  {
+    "name": "Crypt 1 - Crypt Key",
+    "area": 4,
+    "room": 46,
+    "gates": []
+  },
+  {
+    "name": "Crypt 2 - Bombs x4",
+    "area": 5,
+    "room": 1,
+    "gates": []
+  },
+  {
+    "name": "Crypt 2 - Crypt Key",
+    "area": 5,
+    "room": 6,
+    "gates": []
+  },
+  {
+    "name": "Crypt 2 - Crystal Ball",
+    "area": 5,
+    "room": 10,
+    "gates": []
+  },
+  {
+    "name": "Crypt 2 - Bronze Sword",
+    "area": 5,
+    "room": 27,
+    "gates": []
+  },
+  {
+    "name": "Crypt 3 - Crypt Key",
+    "area": 6,
+    "room": 4,
+    "gates": []
+  },
+  {
+    "name": "Crypt 3 - Bombs x4",
+    "area": 6,
+    "room": 25,
+    "gates": []
+  },
+  {
+    "name": "Crypt 3 - Bronze Shield",
+    "area": 6,
+    "room": 36,
+    "gates": []
+  },
+  {
+    "name": "Crypt 3 - Medicine",
+    "area": 6,
+    "room": 41,
+    "gates": []
+  },
+  {
+    "name": "Crypt 3 - Crystal Ball",
+    "area": 6,
+    "room": 61,
+    "gates": []
+  },
+  {
+    "name": "Crypt 4 - Crypt Key",
+    "area": 7,
+    "room": 3,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 4 - Medicine",
+    "area": 7,
+    "room": 26,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 4 - Crystal Ball",
+    "area": 7,
+    "room": 36,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 4 - Steel Armor",
+    "area": 7,
+    "room": 48,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 5 - Steel Sword",
+    "area": 8,
+    "room": 4,
+    "gates": []
+  },
+  {
+    "name": "Crypt 5 - Crypt Key",
+    "area": 8,
+    "room": 6,
+    "gates": []
+  },
+  {
+    "name": "Crypt 5 - Bombs x4",
+    "area": 8,
+    "room": 33,
+    "gates": []
+  },
+  {
+    "name": "Crypt 5 - Crystal Ball",
+    "area": 8,
+    "room": 34,
+    "gates": []
+  },
+  {
+    "name": "Crypt 5 - Bombs x4",
+    "area": 8,
+    "room": 36,
+    "gates": []
+  },
+  {
+    "name": "Crypt 5 - Medicine",
+    "area": 8,
+    "room": 38,
+    "gates": []
+  },
+  {
+    "name": "Crypt 6 - Strongest Armor",
+    "area": 9,
+    "room": 11,
+    "gates": [
+      "falcon-shoes",
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 6 - Medicine",
+    "area": 9,
+    "room": 15,
+    "gates": [
+      "falcon-shoes",
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 6 - Crystal Ball",
+    "area": 9,
+    "room": 30,
+    "gates": [
+      "falcon-shoes",
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 6 - Crypt Key",
+    "area": 9,
+    "room": 43,
+    "gates": [
+      "falcon-shoes"
+    ]
+  },
+  {
+    "name": "Crypt 7 - Medicine",
+    "area": 10,
+    "room": 5,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 7 - Crypt Key",
+    "area": 10,
+    "room": 11,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 7 - Bombs x4",
+    "area": 10,
+    "room": 15,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 7 - Strongest Shield",
+    "area": 10,
+    "room": 39,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 7 - Crystal Ball",
+    "area": 10,
+    "room": 40,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 8 - Bombs x8",
+    "area": 11,
+    "room": 14,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 8 - Bombs x4",
+    "area": 11,
+    "room": 26,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 8 - Medicine",
+    "area": 11,
+    "room": 39,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 8 - Crystal Ball",
+    "area": 11,
+    "room": 42,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 8 - Sky Bell",
+    "area": 11,
+    "room": 43,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Crypt 8 - Crypt Key",
+    "area": 11,
+    "room": 45,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Land Sphere Rooms - Book of Revival",
+    "area": 12,
+    "room": 9,
+    "gates": []
+  },
+  {
+    "name": "Land Sphere Rooms - Bombs x4",
+    "area": 12,
+    "room": 17,
+    "index": 0,
+    "gates": []
+  },
+  {
+    "name": "Land Sphere Rooms - Medicine",
+    "area": 12,
+    "room": 17,
+    "index": 1,
+    "gates": []
+  },
+  {
+    "name": "Land Sphere Rooms - Fire Wand",
+    "area": 12,
+    "room": 33,
+    "gates": []
+  },
+  {
+    "name": "Subterranean Sphere Rooms - Moonbeam Moss",
+    "area": 13,
+    "room": 9,
+    "gates": [
+      "fire-wand"
+    ]
+  },
+  {
+    "name": "Subterranean Sphere Rooms - Rainbow Drop",
+    "area": 13,
+    "room": 29,
+    "gates": []
+  },
+  {
+    "name": "Subterranean Sphere Rooms - Medicine",
+    "area": 13,
+    "room": 32,
+    "gates": [
+      "fire-wand"
+    ]
+  },
+  {
+    "name": "Sea Sphere Rooms - Falcon Shoes",
+    "area": 14,
+    "room": 3,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Sea Sphere Rooms - Medicine",
+    "area": 14,
+    "room": 21,
+    "gates": [
+      "fire-wand"
+    ]
+  },
+  {
+    "name": "Sea Sphere Rooms - Steel Shield",
+    "area": 14,
+    "room": 46,
+    "gates": [
+      "rainbow-drop"
+    ]
+  },
+  {
+    "name": "Sea Sphere Rooms - Bombs x4",
+    "area": 14,
+    "room": 51,
+    "gates": []
+  },
+  {
+    "name": "Sky Sphere Rooms - Bombs x8",
+    "area": 15,
+    "room": 3,
+    "gates": []
+  },
+  {
+    "name": "Sky Sphere Rooms - Medicine",
+    "area": 15,
+    "room": 4,
+    "gates": []
+  },
+  {
+    "name": "Sky Sphere Rooms - Medicine",
+    "area": 15,
+    "room": 18,
+    "gates": []
+  },
+  {
+    "name": "Sky Sphere Rooms - Strongest Sword",
+    "area": 15,
+    "room": 36,
+    "gates": [
+      "bell"
+    ]
+  },
+  {
+    "name": "Sky Sphere Rooms - Bombs x20",
+    "area": 15,
+    "room": 43,
+    "index": 0,
+    "gates": []
+  },
+  {
+    "name": "Sky Sphere Rooms - Medicine",
+    "area": 15,
+    "room": 43,
+    "index": 1,
+    "gates": []
+  }
+]

@@ -6,4 +6,5 @@ members = [
     "neutopia",
     "rando",
     "rando-cli",
+    "rando-web",
 ]

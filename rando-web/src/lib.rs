@@ -7,6 +7,7 @@ use yew::web_sys::{Blob, BlobPropertyBag};
 use yew::{html, prelude::*, ChangeData, Component, ComponentLink, Html, ShouldRender};
 
 use neutopia::verify;
+use rando::{randomize, Config, RandoType};
 
 struct Model {
     link: ComponentLink<Self>,
@@ -37,7 +38,6 @@ impl Component for Model {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::File(file) => {
-                log::info!("test2");
                 if let Some(file) = file {
                     let callback = self.link.callback(Msg::Loaded);
                     let task = self.reader.read_file(file, callback).unwrap();
@@ -48,7 +48,16 @@ impl Component for Model {
             Msg::Loaded(file) => {
                 self.verified_str = match verify(&file.content) {
                     Ok(info) => {
-                        saveRom(&file.content, "neutopia-out.pce".into());
+                        let config = Config {
+                            ty: RandoType::Global,
+                            seed: None,
+                        };
+                        let game = randomize(&config, &file.content).unwrap();
+
+                        saveRom(
+                            &game.data,
+                            format!("neutopia-randomizer-{}.pce", game.seed).into(),
+                        );
                         format!("{:?}", &info)
                     }
                     Err(e) => format!("invalid rom: {}", e),

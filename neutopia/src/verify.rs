@@ -10,6 +10,7 @@ pub enum Region {
     Unknown,
 }
 
+#[derive(Clone, Debug)]
 pub struct RomInfo {
     pub headered: bool,
     pub md5_hash: String,

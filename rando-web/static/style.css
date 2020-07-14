@@ -1,0 +1,23 @@
+html {
+  background-color: #0091da;
+  background-image: url("bg.png");
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-attachment: fixed;
+  background-size: 100% auto;
+}
+
+.content {
+  margin: 32px;
+}
+
+.panel {
+  background-color: #ffffff;
+}
+
+.logo {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}

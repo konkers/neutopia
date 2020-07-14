@@ -1,7 +1,9 @@
 #![recursion_limit = "512"]
 
+use js_sys::{Array, ArrayBuffer, DataView, Uint8Array};
 use wasm_bindgen::prelude::*;
 use yew::services::reader::{File, FileData, ReaderService, ReaderTask};
+use yew::web_sys::{Blob, BlobPropertyBag};
 use yew::{html, prelude::*, ChangeData, Component, ComponentLink, Html, ShouldRender};
 
 use neutopia::verify;
@@ -45,7 +47,10 @@ impl Component for Model {
             }
             Msg::Loaded(file) => {
                 self.verified_str = match verify(&file.content) {
-                    Ok(info) => format!("{:?}", &info),
+                    Ok(info) => {
+                        saveRom(&file.content, "neutopia-out.pce".into());
+                        format!("{:?}", &info)
+                    }
                     Err(e) => format!("invalid rom: {}", e),
                 }
             }
@@ -112,4 +117,10 @@ impl Component for Model {
 pub fn run_app() {
     wasm_logger::init(wasm_logger::Config::default());
     App::<Model>::new().mount_to_body();
+}
+
+#[wasm_bindgen]
+extern "C" {
+    fn saveAs(blob: Blob, filename: String);
+    fn saveRom(data: &[u8], filename: String);
 }

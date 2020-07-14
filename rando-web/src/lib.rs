@@ -1,4 +1,4 @@
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 
 use wasm_bindgen::prelude::*;
 use yew::services::reader::{File, FileData, ReaderService, ReaderTask};
@@ -62,22 +62,47 @@ impl Component for Model {
 
     fn view(&self) -> Html {
         html! {
-            <div>
-                <input type="file" multiple=false onchange=self.link.callback(move |value| {
-                    let mut result = None;
-                    if let ChangeData::Files(files) = value {
-                        let file = js_sys::try_iter(&files)
-                            .unwrap()
-                            .unwrap()
-                            .into_iter()
-                            .map(|v| File::from(v.unwrap()))
-                            .next()
-                            .unwrap();
-                        result = Some(file);
-                    }
-                    Msg::File(result)
-                })/>
-                <p>{ &self.verified_str }</p>
+            <div class="content">
+                <div class="logo">
+                    <img src="logo.png"/>
+                </div>
+                <nav class="panel is-primary">
+                    <p class="panel-heading">
+                       {"Generate Seed"}
+                    </p>
+                    <div class="panel-block">
+                        {"Options will go here"}
+                    </div>
+                    <div class="panel-block">
+                        <div class="file">
+                            <span class="file-cta">
+                                <span class="file-icon">
+                                    <i class="mdi mdi-folder-open"></i>
+                                </span>
+                                <span class="file-label">{"Select US Neutopia rom"}</span>
+                            </span>
+                            <input class="file-input" type="file" multiple=false onchange=self.link.callback(move |value| {
+                                let mut result = None;
+                                if let ChangeData::Files(files) = value {
+                                    let file = js_sys::try_iter(&files)
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_iter()
+                                        .map(|v| File::from(v.unwrap()))
+                                        .next()
+                                        .unwrap();
+                                    result = Some(file);
+                                }
+                                Msg::File(result)
+                            })/>
+                        </div>
+                    </div>
+                </nav>
+                <section class="section">
+                    <div class="container">
+                        <p>{ &self.verified_str }</p>
+                    </div>
+                </section>
             </div>
         }
     }

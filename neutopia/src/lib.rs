@@ -74,7 +74,8 @@ impl Neutopia {
             // First scan for conditionals, record them, then remove them from the
             // table entries.
             if object_table.len() > 2 {
-                for i in 0..(object_table.len() - 2) {
+                let mut i = 0;
+                while (i + 2) < object_table.len() {
                     if let Some(id) = object_table[i].chest_id() {
                         let chest = &chest_table[id as usize];
                         let next = object_table[i + 1].clone();
@@ -89,9 +90,9 @@ impl Neutopia {
                                     data: vec![next, next_next],
                                 },
                             );
-                            break;
                         }
                     }
+                    i += 1;
                 }
             }
 

@@ -1,0 +1,71 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: build wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.OS }}-deploy-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-deploycargo-
+
+      - name: install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: install wasm-pack
+        uses: jetli/wasm-pack-action@v0.3.0
+        with:
+          # Optional version of wasm-pack to install(eg. 'v0.9.1', 'latest')
+          version: "latest"
+
+      - name: build wasm-pack
+        run: |
+          (cd rando-web; wasm-pack build --target web --out-name wasm --out-dir ./static)
+        shell: bash
+
+      - name: archive web artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: rando-web-static
+          path: rando-web/static
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: download web artifacts
+        uses: actions/download-artifact@master
+        with:
+          name: rando-web-static
+          path: rando-web/static
+
+      - name: deploy to firebase
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only hosting:dev-neutopia-run
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_ID: neutopia-run
+          PROJECT_PATH: ./rando-web

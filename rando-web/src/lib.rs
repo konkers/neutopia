@@ -116,6 +116,9 @@ impl Component for Model {
                     <div class="container">
                         <p>{ &self.verified_str }</p>
                     </div>
+                    <div class="container">
+                        <p>{ format!("{} {} {}", env!("CARGO_PKG_VERSION"), env!("VERGEN_SHA"), env!("VERGEN_BUILD_TIMESTAMP")) }</p>
+                    </div>
                 </section>
             </div>
         }

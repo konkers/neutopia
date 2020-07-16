@@ -3,6 +3,8 @@ name: deploy
 on:
   push:
     branches: [main]
+    tags:
+      - "*"
 
 env:
   CARGO_TERM_COLOR: always
@@ -55,6 +57,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Setup Environment
+        run: |
+          ./.github/workflows/env_setup.sh DEPLOY_SITE
+        shell: bash
+
       - name: download web artifacts
         uses: actions/download-artifact@master
         with:
@@ -64,7 +71,7 @@ jobs:
       - name: deploy to firebase
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only hosting:dev-neutopia-run
+          args: deploy --only hosting:${{env.DEPLOY_SITE}}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           PROJECT_ID: neutopia-run

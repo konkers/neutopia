@@ -36,7 +36,7 @@ fn parse_semver(semver: &str) -> WebsiteMode {
 }
 
 fn get_website_mode() -> WebsiteMode {
-    parse_semver(env!("VERGEN_SEMVER"))
+    parse_semver(env!("VERGEN_SEMVER_LIGHTWEIGHT"))
 }
 
 struct Model {
@@ -181,7 +181,7 @@ impl Component for Model {
                         <p>{
                             match get_website_mode(){
                              WebsiteMode::Dev => format!("dev {} {}", env!("VERGEN_SHA"), env!("VERGEN_BUILD_TIMESTAMP")),
-                             _ => format!("{} {} {}", env!("VERGEN_SEMVER"), env!("VERGEN_SHA"), env!("VERGEN_BUILD_TIMESTAMP")),
+                             _ => format!("{} {} {}", env!("VERGEN_SEMVER_LIGHTWEIGHT"), env!("VERGEN_SHA"), env!("VERGEN_BUILD_TIMESTAMP")),
                            }
                         }</p>
                     </div>

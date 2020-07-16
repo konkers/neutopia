@@ -11,6 +11,8 @@ use rando::{randomize, Config, RandoType};
 
 mod info;
 
+use info::Info;
+
 #[derive(Debug, PartialEq)]
 enum WebsiteMode {
     Dev,
@@ -108,6 +110,7 @@ impl Component for Model {
                 <div class="logo">
                     <img src="logo.png"/>
                 </div>
+                <Info />
                 <nav class="panel is-primary">
                     <p class="panel-heading">
                        {"Generate Seed"}

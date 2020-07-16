@@ -27,7 +27,7 @@ impl Component for Info {
                 </p>
                 <div class="panel-block">
                 <p>
-                   {"Neutopia randomizer is in in very early development.  Currently the only thing that is randomized is key location.  Care has been taken to avoid un-completable seeds.   If you find a bug, please feel free to file and issue on our "}
+                   {"Neutopia randomizer is in very early development.  Currently the only thing that is randomized is key location.  Care has been taken to avoid un-completable seeds.   If you find a bug, please feel free to file and issue on our "}
                    <a href="https://github.com/konkers/neutopia/issues">{"tracker"}</a>{"."}
                     </p>
                 </div>

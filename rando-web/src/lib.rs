@@ -1,14 +1,15 @@
 #![recursion_limit = "512"]
 
-use js_sys::{Array, ArrayBuffer, DataView, Uint8Array};
 use regex::Regex;
 use wasm_bindgen::prelude::*;
 use yew::services::reader::{File, FileData, ReaderService, ReaderTask};
-use yew::web_sys::{Blob, BlobPropertyBag};
+use yew::web_sys::Blob;
 use yew::{html, prelude::*, ChangeData, Component, ComponentLink, Html, ShouldRender};
 
 use neutopia::verify;
 use rando::{randomize, Config, RandoType};
+
+mod info;
 
 #[derive(Debug, PartialEq)]
 enum WebsiteMode {

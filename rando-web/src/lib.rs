@@ -53,6 +53,65 @@ enum Msg {
     Loaded(FileData),
 }
 
+impl Model {
+    fn view_coming_soon(&self) -> Html {
+        html! {
+            <nav class="panel is-primary">
+                <p class="panel-heading">
+                    {"Comming Soon"}
+                </p>
+                <div class="panel-block">
+                    <p>
+                        {"The Neutopia randomizer is under heavy development.  We don't
+                          stable release yet.  If you'd like to try the beta head over to "}
+                        <a href="https://beta.neutopia.run">{"beta.neutopia.run"}</a>
+                        {" to generate a seed."}
+                    </p>
+                </div>
+            </nav>
+        }
+    }
+
+    fn view_randomizer(&self) -> Html {
+        html! {
+            <>
+                <Info />
+                <nav class="panel is-primary">
+                    <p class="panel-heading">
+                       {"Generate Seed"}
+                    </p>
+                    <div class="panel-block">
+                        {"Options will go here"}
+                    </div>
+                    <div class="panel-block">
+                        <div class="file">
+                            <span class="file-cta">
+                                <span class="file-icon">
+                                    <i class="mdi mdi-folder-open"></i>
+                                </span>
+                                <span class="file-label">{"Select US Neutopia rom"}</span>
+                            </span>
+                            <input class="file-input" type="file" multiple=false onchange=self.link.callback(move |value| {
+                                let mut result = None;
+                                if let ChangeData::Files(files) = value {
+                                    let file = js_sys::try_iter(&files)
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_iter()
+                                        .map(|v| File::from(v.unwrap()))
+                                        .next()
+                                        .unwrap();
+                                    result = Some(file);
+                                }
+                                Msg::File(result)
+                            })/>
+                        </div>
+                    </div>
+                </nav>
+            </>
+        }
+    }
+}
 impl Component for Model {
     type Message = Msg;
     type Properties = ();
@@ -110,39 +169,10 @@ impl Component for Model {
                 <div class="logo">
                     <img src="logo.png"/>
                 </div>
-                <Info />
-                <nav class="panel is-primary">
-                    <p class="panel-heading">
-                       {"Generate Seed"}
-                    </p>
-                    <div class="panel-block">
-                        {"Options will go here"}
-                    </div>
-                    <div class="panel-block">
-                        <div class="file">
-                            <span class="file-cta">
-                                <span class="file-icon">
-                                    <i class="mdi mdi-folder-open"></i>
-                                </span>
-                                <span class="file-label">{"Select US Neutopia rom"}</span>
-                            </span>
-                            <input class="file-input" type="file" multiple=false onchange=self.link.callback(move |value| {
-                                let mut result = None;
-                                if let ChangeData::Files(files) = value {
-                                    let file = js_sys::try_iter(&files)
-                                        .unwrap()
-                                        .unwrap()
-                                        .into_iter()
-                                        .map(|v| File::from(v.unwrap()))
-                                        .next()
-                                        .unwrap();
-                                    result = Some(file);
-                                }
-                                Msg::File(result)
-                            })/>
-                        </div>
-                    </div>
-                </nav>
+                { match get_website_mode() {
+                    WebsiteMode::Release => self.view_coming_soon(),
+                    _ => self.view_randomizer(),
+                }}
                 <section class="section">
                     <div class="container">
                         <p>{ &self.verified_str }</p>

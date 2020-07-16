@@ -1,6 +1,7 @@
 #![recursion_limit = "512"]
 
 use js_sys::{Array, ArrayBuffer, DataView, Uint8Array};
+use regex::Regex;
 use wasm_bindgen::prelude::*;
 use yew::services::reader::{File, FileData, ReaderService, ReaderTask};
 use yew::web_sys::{Blob, BlobPropertyBag};
@@ -8,6 +9,32 @@ use yew::{html, prelude::*, ChangeData, Component, ComponentLink, Html, ShouldRe
 
 use neutopia::verify;
 use rando::{randomize, Config, RandoType};
+
+#[derive(Debug, PartialEq)]
+enum WebsiteMode {
+    Dev,
+    Beta,
+    Release,
+}
+
+fn parse_semver(semver: &str) -> WebsiteMode {
+    let re = Regex::new(r"^(v\d+\.\d+\.\d+)(-.*)?$").unwrap();
+    let captures = re.captures(semver);
+    match captures {
+        Some(c) => {
+            if let Some(_) = c.get(2) {
+                WebsiteMode::Beta
+            } else {
+                WebsiteMode::Release
+            }
+        }
+        None => WebsiteMode::Dev,
+    }
+}
+
+fn get_website_mode() -> WebsiteMode {
+    parse_semver(env!("VERGEN_SEMVER"))
+}
 
 struct Model {
     link: ComponentLink<Self>,
@@ -117,7 +144,12 @@ impl Component for Model {
                         <p>{ &self.verified_str }</p>
                     </div>
                     <div class="container">
-                        <p>{ format!("{} {} {}", env!("CARGO_PKG_VERSION"), env!("VERGEN_SHA"), env!("VERGEN_BUILD_TIMESTAMP")) }</p>
+                        <p>{
+                            match get_website_mode(){
+                             WebsiteMode::Dev => format!("dev {} {}", env!("VERGEN_SHA"), env!("VERGEN_BUILD_TIMESTAMP")),
+                             _ => format!("{} {} {}", env!("VERGEN_SEMVER"), env!("VERGEN_SHA"), env!("VERGEN_BUILD_TIMESTAMP")),
+                           }
+                        }</p>
                     </div>
                 </section>
             </div>
@@ -135,4 +167,16 @@ pub fn run_app() {
 extern "C" {
     fn saveAs(blob: Blob, filename: String);
     fn saveRom(data: &[u8], filename: String);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_website_mode() {
+        assert_eq!(parse_semver("v0.1.0-beta1"), WebsiteMode::Beta);
+        assert_eq!(parse_semver("v0.1.0"), WebsiteMode::Release);
+        assert_eq!(parse_semver("UNKNOWN"), WebsiteMode::Dev);
+    }
 }
